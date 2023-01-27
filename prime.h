@@ -385,6 +385,16 @@ namespace PRIME
         }
         return a;
     }
+    int gcd(int a, int b)
+    {
+        int c;
+        while (b) {
+            c = b;
+            b = a % b;
+            a = c;
+        }
+        return a;
+    }
 
     long long to_long(std::string s)
     {
