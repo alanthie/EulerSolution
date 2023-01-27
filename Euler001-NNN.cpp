@@ -5,6 +5,22 @@
 using namespace RationalNS;
 using namespace PRIME;
 
+long long Euler091(long long n)
+{
+    //14234
+    long long t = 0;
+    long long m = 0;
+    for(long long x = 1; x< n+1;x++)
+    {
+        for(long long y = 1; y< n+1; y++)
+        {
+            m = gcd(x, y);
+            t += std::min(x*m/y, m*(n-y)/x);
+        }
+    }
+    return t*2 + n*n*3;
+}
+
 class p090
 {
 // Adapted From web
@@ -1258,16 +1274,6 @@ long long Euler076(long long N)
     return r;
 }
 
-int gcd(int a, int b)
-{
-    int c;
-    while (b) {
-        c = b;
-        b = a % b;
-        a = c;
-    }
-    return a;
-}
 long long Euler075(long long N)
 {
     //161667
@@ -4789,6 +4795,9 @@ int main()
 
     n = Euler090(2); to_file("Euler090", n);
     std::cout << "Euler090 " << n << std::endl;
+
+    n = Euler091(50); to_file("Euler091", n);
+    std::cout << "Euler091 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
