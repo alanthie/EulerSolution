@@ -15,4 +15,4 @@
 </p>https://github.com/ckormanyos/wide-decimal</p>
 
 <p>Windows project is in the repository</p>
-<p>Linux project is in the repository.</p>
+<p>Linux project (Code::Blocks IDE) is in the repository.</p>
