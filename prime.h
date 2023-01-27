@@ -385,9 +385,9 @@ namespace PRIME
         }
         return a;
     }
-    int gcd(int a, int b)
+    long long gcd(long long a, long long b)
     {
-        int c;
+        long long c;
         while (b) {
             c = b;
             b = a % b;
