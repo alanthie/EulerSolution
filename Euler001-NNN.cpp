@@ -5,6 +5,36 @@
 using namespace RationalNS;
 using namespace PRIME;
 
+long long ssd(long long n)
+{
+    long long ans = 0;
+    while(n)
+    {
+        long long d = n%10;
+        n = n/10;
+        ans += d*d;
+    }
+    return ans;
+}
+
+long long Euler092(long long N)
+{
+    //8581146
+    long long n89 = 0;
+    for(long long n = 2; n < N; n++)
+    {
+        long long s = ssd(n);
+        while(s != 1 && s != 89)
+        {
+            s = ssd(s);
+        }
+        if(s==89){
+          n89++;
+        }
+    }
+    return n89;
+}
+
 long long Euler091(long long n)
 {
     //14234
@@ -4798,6 +4828,9 @@ int main()
 
     n = Euler091(50); to_file("Euler091", n);
     std::cout << "Euler091 " << n << std::endl;
+
+    n = Euler092(10000000); to_file("Euler092", n);
+    std::cout << "Euler092 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
