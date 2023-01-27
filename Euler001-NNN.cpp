@@ -216,7 +216,9 @@ long long Euler090(long long n)
     return c.solve();
 }
 
+#ifdef _WIN32
 #pragma warning(disable:4996)
+#endif
 class p089
 {
 // Adapted From web
@@ -226,13 +228,17 @@ public:
     {
         FILE* fp;
         char str[100];
-        int i; int counter; int sum = 0;
-        if (fp = fopen("p089_roman.txt", "r"))
+        int counter; int sum = 0;
+        #ifdef _WIN32
+        fp = fopen("p089_roman.txt", "r");
+        #else
+        fp = fopen("../Euler/p089_roman.txt", "r");
+        #endif
+        if (fp != NULL)
         {
             while (!feof(fp))
             {
-                i = 0;
-                int r = fscanf(fp, "%s", str);
+                fscanf(fp, "%s", str);
                 counter = (int)strlen(str);
                 str[counter] = '\0';
                 //printf("%s\n",str);
@@ -491,7 +497,7 @@ public:
     constexpr static long long fiftyMillion = 50000001;
     constexpr static long long sz = 10001;
     constexpr static long long mx = 101;
-    bool p[sz]; 
+    bool p[sz];
     bool* ans = nullptr;// [fiftyMillion + 2] ;
     long long primeTable[1230]; long long  ind = 0;
 
@@ -522,33 +528,33 @@ public:
         //printf("Sieve done\n");
     }
 
-    long long solve() 
+    long long solve()
     {
         long long i; long long j; long long k; long long cnt = 0;
         long long sum; long long S; long long Q; long long F;
 
         sieve();
 
-        for (i = 0; i < ind; i++) 
+        for (i = 0; i < ind; i++)
         {
             S = primeTable[i] * primeTable[i];
             if (S > fiftyMillion)
                 break;
 
-            for (j = 0; j < ind; j++) 
+            for (j = 0; j < ind; j++)
             {
                 Q = primeTable[j] * primeTable[j] * primeTable[j];
                 if (Q + S > fiftyMillion)
                     break;
 
-                for (k = 0; k < ind; k++) 
+                for (k = 0; k < ind; k++)
                 {
                     F = primeTable[k] * primeTable[k] * primeTable[k] * primeTable[k];
                     if (F + Q + S > fiftyMillion)
                         break;
 
                     sum = S + Q + F;
-                    if (!ans[sum]) 
+                    if (!ans[sum])
                     {
                         cnt++;
                         ans[sum] = true;
@@ -566,7 +572,7 @@ long long Euler087(long long n)
 {
     // 1097343
     /*
-    Roughly we have to generate prime numbers up to 10000. 
+    Roughly we have to generate prime numbers up to 10000.
     There are 1229 prime numbers bellow 10000. After generating these prime
     */
     n = n;
@@ -593,7 +599,7 @@ long long Euler086(long long n)
     while (counter < n)
     {
         M++;
-        for (long long baseHeightWidth = 3; baseHeightWidth <= 2 * M; baseHeightWidth++) 
+        for (long long baseHeightWidth = 3; baseHeightWidth <= 2 * M; baseHeightWidth++)
         {
             const long double pathLength = getLength(M, baseHeightWidth);
             if (is_integer(pathLength))
@@ -622,12 +628,12 @@ std::string Euler085(long long N)
     long long bestDiff = std::numeric_limits<long long>::max();
     long long bestArea = -1;
     long long sqr = (long long)sqrt(N);
-    for (long long w = 1; w <= sqr; w++) 
+    for (long long w = 1; w <= sqr; w++)
     {
         for (long long h = 1; h <= sqr; h++)
         {
             long long diff = std::abs(numberRectangles(w, h) - N);
-            if (diff < bestDiff) 
+            if (diff < bestDiff)
             {
                 bestDiff = diff;
                 bestArea = w * h;
@@ -645,8 +651,10 @@ public:
     int distance[80][80];
     constexpr static int h = 80; constexpr static int w = 80;
 
+#ifdef _WIN32
 #pragma warning(push)
 #pragma warning(disable:6385)
+#endif
     std::string run()
     {
         for (int i = 0; i < 80; i++)
@@ -655,11 +663,11 @@ public:
 
         // Bellman–Ford algorithm
         distance[0][0] = GRID[0][0];
-        for (int i = 0; i < w * h; i++) 
+        for (int i = 0; i < w * h; i++)
         {
-            for (int y = 0; y < h; y++) 
+            for (int y = 0; y < h; y++)
             {
-                for (int x = 0; x < w; x++) 
+                for (int x = 0; x < w; x++)
                 {
                     int temp = 999999;
                     temp = std::min(getDistance(x - 1, y), temp);
@@ -672,7 +680,9 @@ public:
         }
         return std::to_string(distance[h - 1][w - 1]);
     }
+#ifdef _WIN32
 #pragma warning(pop)
+#endif
 
     int getDistance(int x, int y) {
         if (y < 0 || y >= 80 || x < 0 || x >= 80) return 999999;
@@ -927,7 +937,11 @@ long long Euler081(long long N)
     mat::matrix mvisit(NROWS, NROWS, 0);
     std::string s;
 
+    #ifdef _WIN32
     std::ifstream is("p081_matrix.txt", std::ifstream::in);
+    #else
+    std::ifstream is("../Euler/p081_matrix.txt", std::ifstream::in);
+    #endif
     if (is)
     {
         // get length of file:
