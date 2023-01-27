@@ -556,8 +556,11 @@ public:
         ans = new bool[fiftyMillion + 2];
         long i, j;
 
+        for (i = 0; i < fiftyMillion + 2; i++) ans[i] = false;
+        for (i = 0; i < sz; i++) p[i] = false;
         for (i = 4; i < sz; i += 2)
             p[i] = true;
+
         primeTable[ind++] = 2;
         for (i = 3; i <= mx; i += 2) {
             if (!p[i]) {
