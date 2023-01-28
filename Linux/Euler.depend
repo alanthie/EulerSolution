@@ -11,12 +11,13 @@
 	<tuple>
 	<algorithm>
 
-1674779516 source:/home/server/dev/EulerSolution/rational.cpp
+1674864794 source:/home/server/dev/EulerSolution/rational.cpp
 	"rational.h"
 
-1674779516 /home/server/dev/EulerSolution/rational.h
+1674867545 /home/server/dev/EulerSolution/rational.h
 	<iostream>
 	"common.h"
+	"BigInteger.h"
 
 1674779655 /home/server/dev/EulerSolution/common.h
 	<math\wide_integer\uintwide_t.h>
@@ -65,13 +66,24 @@
 	<type_traits>
 	<intrin.h>
 
-1674782644 source:/home/server/dev/EulerSolution/Euler001-NNN.cpp
+1674867545 source:/home/server/dev/EulerSolution/Euler001-NNN.cpp
 	"common.h"
 	"matrix.hpp"
 	"prime.h"
 	"rational.h"
 
-1674781754 /home/server/dev/EulerSolution/prime.h
+1674854672 /home/server/dev/EulerSolution/prime.h
 	"common.h"
 	"matrix.hpp"
+
+1674864577 /home/server/dev/EulerSolution/BigInteger.h
+	<string>
+	"uinteger_t.hh"
+
+1674864877 source:/home/server/dev/EulerSolution/BigInteger.cpp
+	"BigInteger.h"
+	<iostream>
+	<string>
+	<sstream>
+	<cmath>
 

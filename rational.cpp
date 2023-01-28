@@ -27,15 +27,13 @@ namespace RationalNS
         }
         else if (this->n == BigIntegerONE)
         {
-           //output << this->m.getFNumber() << "/" << "1";
-           output << this->m << "/" << "1";
+           output << this->m.getFNumber() << "/" << "1";
+           //output << this->getM().getNumber()<< "/" << "1";
         }
         else
         {
-            //auto a = this->m.getFNumber();
-            //auto b = this->n.getFNumber();
-            auto a = this->m;
-            auto b = this->n;
+            auto a = this->m.getFNumber();
+            auto b = this->n.getFNumber();
             output << a << "/" << b;
         }
         if (line_return)
@@ -45,7 +43,7 @@ namespace RationalNS
     std::ostream& operator<<(std::ostream& output,const RationalNumber& Number)
     {
         //output << Number.m.getFNumber() << "/" << Number.n.getFNumber();
-        output << Number.m << "/" << Number.n;
+        output << Number.getM() << "/" << Number.getN();
         return output;
     }
 
@@ -162,13 +160,13 @@ namespace RationalNS
         // GCD of two number
         if (a < BigIntegerZERO)
         {
-            if (a < 0) a = -1 * a;
-            //a = a.absolute();
+            //if (a < 0) a = -1 * a;
+            a = a.absolute();
         }
         if (b < BigIntegerZERO)
         {
-            if (b < 0) b = -1 * b;
-            //b = b.absolute();
+            //if (b < 0) b = -1 * b;
+            b = b.absolute();
         }
 
         if(a<b)

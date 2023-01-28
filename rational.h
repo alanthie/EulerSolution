@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include "common.h"
-using BigInteger = uinteger_t;
-//#include "BigInteger.h"
+//using BigInteger = uinteger_t;
+#include "BigInteger.h" // Allow negative number
 
 namespace RationalNS
 {

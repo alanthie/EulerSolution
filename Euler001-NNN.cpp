@@ -5,6 +5,161 @@
 using namespace RationalNS;
 using namespace PRIME;
 
+long long do_oper(long long a,long long b,long long c,long long d, std::vector<int> vop)
+{
+    RationalNumber r = RationalNumber(a,1);
+    int next = 1;
+    std::vector<RationalNumber> vn {RationalNumber(a,1),RationalNumber(b,1),RationalNumber(c,1),RationalNumber(d,1)};
+
+    std::string sop[4] = {"+", "-", "*", "/"};
+    for(int i=0;i<3;i++)
+    {
+        if      (vop[i]==0) r = r + vn[next];
+        else if (vop[i]==1) r = r - vn[next];
+        else if (vop[i]==2) r = r * vn[next];
+        else if (vop[i]==3)
+        {
+            if (vn[next].getM() != 0) r = r/vn[next];
+            else return -1;
+        }
+        next++;
+    }
+    if (r.getM().getSign())  return -1;
+    if (r.getN() != BigIntegerONE) return -1;
+
+    return r.getM().toLongLong();
+}
+
+long long do_bin_oper(long long a,long long b,long long c,long long d, std::vector<int> vop)
+{
+    RationalNumber r = RationalNumber(a,1);
+    RationalNumber r2 = RationalNumber(c,1);
+    int next = 1;
+    int next2 = 3;
+    std::vector<RationalNumber> vn {RationalNumber(a,1),RationalNumber(b,1),RationalNumber(c,1),RationalNumber(d,1)};
+
+    std::string sop[4] = {"+", "-", "*", "/"};
+
+    long long i = 0;
+    if      (vop[i]==0) r = r + vn[next];
+    else if (vop[i]==1) r = r - vn[next];
+    else if (vop[i]==2) r = r * vn[next];
+    else if (vop[i]==3)
+    {
+        if (vn[next].getM() != 0) r = r/vn[next];
+        else return -1;
+    }
+
+    i = 2;
+    if      (vop[i]==0) r2 = r2 + vn[next2];
+    else if (vop[i]==1) r2 = r2- vn[next2];
+    else if (vop[i]==2) r2 = r2 * vn[next2];
+    else if (vop[i]==3)
+    {
+        if (vn[next2].getM() != 0) r2 = r2/vn[next2];
+        else return -1;
+    }
+
+    i = 1;
+    if      (vop[i]==0) r = r + r2;
+    else if (vop[i]==1) r = r - r2;
+    else if (vop[i]==2) r = r * r2;
+    else if (vop[i]==3)
+    {
+        if (r2.getM() != 0) r = r/r2;
+        else return -1;
+    }
+
+    if (r.getM().getSign())  return -1;
+    if (r.getN() != BigIntegerONE) return -1;
+
+    return r.getM().toLongLong();
+}
+
+long long Euler093(long long N)
+{
+    //1258
+    N=N;
+    std::vector<int> voper;
+    std::map<std::vector<int>, bool> map_oper;
+    std::map<long long, long long> map_result;
+    int max_seq_cnt = 0;
+    long long r;
+    int cnt;
+    std::vector<long long> v;
+    std::vector<long long> vmax = {0,1,2,3};
+
+    for(int op_1=0;op_1<4;op_1++)
+    for(int op_2=0;op_2<4;op_2++)
+    for(int op_3=0;op_3<4;op_3++)
+    {
+        voper.clear();
+        voper.push_back(op_1);
+        voper.push_back(op_2);
+        voper.push_back(op_3);
+        map_oper[voper] = true;
+    }
+
+    for(long a=0;  a<10;a++)
+    for(long b=a+1;b<10;b++)
+    for(long c=b+1;c<10;c++)
+    for(long d=c+1;d<10;d++)
+    {
+        map_result.clear();
+
+        //permutation
+        v = {a,b,c,d};
+        for(int i = 0; i < 4; i++)
+        for(int j = 0; j < 4; j++)
+        for(int k = 0; k < 4; k++)
+        for(int l = 0; l < 4; l++)
+        if ((i!=j) && (i!=k) && (i!=l) && (j!=k) && (j!=l) && (k!=l) )
+        {
+            for(auto& [vop, n] : map_oper)
+            {
+                r = do_oper(v[i], v[j], v[k], v[l], vop);
+                if (r!=-1)
+                {
+                    map_result[r]++;
+                }
+            }
+
+            for(auto& [vop, n] : map_oper)
+            {
+                r = do_bin_oper(v[i], v[j], v[k], v[l], vop);
+                if (r!=-1)
+                {
+                    map_result[r]++;
+                }
+            }
+        }
+
+        cnt = 0;
+        for(size_t i=1;i<map_result.size();i++)
+        {
+            if (map_result.find(i) != map_result.end())
+            {
+                cnt++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        //std::cout << a << b << c << d << " cnt: " << cnt << std::endl;
+
+        if (cnt > max_seq_cnt)
+        {
+            max_seq_cnt = cnt;
+            std::vector<long long> v = {a,b,c,d};
+            vmax = v;
+        }
+    }
+
+    return 1000*vmax[0]+100*vmax[1]+10*vmax[2]+vmax[3];
+}
+
+
 long long ssd(long long n)
 {
     long long ans = 0;
@@ -1485,7 +1640,8 @@ long long Euler071(long long N)
             if (r > r37) break;
         }
     }
-    return (long long)rNearestLess.getM();
+    return rNearestLess.getM().toInt(rNearestLess.getM().getNumber());
+    //return (long long)rNearestLess.getM();
 }
 
 long long Euler070(long long N)
@@ -2389,8 +2545,8 @@ long long Euler057(long long N)
         r = ONE + ONE / (TWO + last_fraction);
         last_fraction = ONE / (TWO + last_fraction);
 
-        auto va = udigits10(r.getN());
-        auto vb = udigits10(r.getM());
+        auto va = udigits10(r.getN().toLongLong());
+        auto vb = udigits10(r.getM().toLongLong());
         if (va.size() < vb.size())
         {
             cnt++;
@@ -4522,6 +4678,17 @@ int main()
     if (is_prime(29*17) != false) std::cout << "ERROR in is_prime(29*17) " << 29*17 << std::endl;
     if (is_prime(961748941) != true) {std::cout << "ERROR in is_prime(961748941) " << 961748941<< std::endl; return 0;}
 
+    {
+        RationalNumberTest rnst;
+        std::pair<int, bool>  p = rnst.unit_tests();
+        if (p.second != true)
+        {
+            std::cout << "ERROR in RationalNumberTest" << p.first<< std::endl;
+            return 0;
+        }
+
+    }
+
     //n = mainEuler001() ; to_file("Euler001", n);
     //std::cout << "Euler001 " << n << std::endl;
 
@@ -4796,36 +4963,36 @@ int main()
 //    n = Euler079(100000000); to_file("Euler079", n);
 //    std::cout << "Euler079 " << n << std::endl;
 //
-    n = Euler080(100); to_file("Euler080", n);
-    std::cout << "Euler080 " << n << std::endl;
-
-    n = Euler081(80); to_file("Euler081", n);
-    std::cout << "Euler081 " << n << std::endl;
-
-    s = Euler082(); to_file("Euler082", s);
-    std::cout << "Euler082 " << s << std::endl;
-
-    s = Euler083(); to_file("Euler083", s);
-    std::cout << "Euler083 " << s << std::endl;
-
-    // Euler084 Monopoly...
-    std::cout << "Euler084 TODO..." << std::endl;
-
-    s = Euler085(2000000); to_file("Euler085", s);
-    std::cout << "Euler085 " << s << std::endl;
-
-    n = Euler086(1000000); to_file("Euler086", n);
-    std::cout << "Euler086 " << n << std::endl;
-
-    n = Euler087(50000000); to_file("Euler087", n);
-    std::cout << "Euler087 " << n << std::endl;
-
-    s = Euler088(12000); to_file("Euler088", s);
-    std::cout << "Euler088 " << s << std::endl;
-
-    n = Euler089(1000); to_file("Euler089", n);
-    std::cout << "Euler089 " << n << std::endl;
-
+//    n = Euler080(100); to_file("Euler080", n);
+//    std::cout << "Euler080 " << n << std::endl;
+//
+//    n = Euler081(80); to_file("Euler081", n);
+//    std::cout << "Euler081 " << n << std::endl;
+//
+//    s = Euler082(); to_file("Euler082", s);
+//    std::cout << "Euler082 " << s << std::endl;
+//
+//    s = Euler083(); to_file("Euler083", s);
+//    std::cout << "Euler083 " << s << std::endl;
+//
+//    // Euler084 Monopoly...
+//    std::cout << "Euler084 TODO..." << std::endl;
+//
+//    s = Euler085(2000000); to_file("Euler085", s);
+//    std::cout << "Euler085 " << s << std::endl;
+//
+//    n = Euler086(1000000); to_file("Euler086", n);
+//    std::cout << "Euler086 " << n << std::endl;
+//
+//    n = Euler087(50000000); to_file("Euler087", n);
+//    std::cout << "Euler087 " << n << std::endl;
+//
+//    s = Euler088(12000); to_file("Euler088", s);
+//    std::cout << "Euler088 " << s << std::endl;
+//
+//    n = Euler089(1000); to_file("Euler089", n);
+//    std::cout << "Euler089 " << n << std::endl;
+//
     n = Euler090(2); to_file("Euler090", n);
     std::cout << "Euler090 " << n << std::endl;
 
@@ -4834,6 +5001,9 @@ int main()
 
     n = Euler092(10000000); to_file("Euler092", n);
     std::cout << "Euler092 " << n << std::endl;
+
+    n = Euler093(0); to_file("Euler093", n);
+    std::cout << "Euler093 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
