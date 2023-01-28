@@ -5,8 +5,106 @@
 using namespace RationalNS;
 using namespace PRIME;
 
+bool solveSudoku(mat::matrix& board, long& guess)
+{
+    std::vector<bool> number_remaining(9+1, true); number_remaining[0] = false;
+    std::vector<bool> v = number_remaining;
+    for(int i=0;i<9;i++)
+    for(int j=0;j<9;j++)
+    {
+        if ( board(i,j) != 0) continue;
+        v = number_remaining;
+        {
+            for(int k=0;k<9;k++)
+            {
+                // Line i
+                if (board(i,k)!=0) v[board(i,k)] = false;
+                // Column j
+                if (board(k,j)!=0) v[board(k,j)] = false;
+            }
+            // 3x3
+            int grid_start_i = 3 * (int)(i/3);
+            int grid_start_j = 3 * (int)(j/3);
+            for(int ii=0;ii<3;ii++)
+            for(int jj=0;jj<3;jj++)
+            {
+                if (board(grid_start_i+ii,grid_start_j+jj)!=0)
+                    v[board(grid_start_i+ii,grid_start_j+jj)] = false;
+            }
+
+            // try remaining at ij
+            for(int k=1;k<=9;k++)
+            {
+                if (v[k] == true)
+                {
+                    board(i,j) = k;
+                    guess++;
+                    mat::matrix copyboard = board;
+                    if (solveSudoku(copyboard, guess) == true)
+                    {
+                        board = copyboard;
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    return true;
+}
+
+long long Euler096(long long N)
+{
+    //24702
+    long long sum=0;
+    std::string s;
+    std::string line[50][9];
+    std::ifstream myfile;
+    myfile.open ("./../Data/p096_sudoku.txt", std::ios_base::in);
+    if (myfile.good())
+    {
+        for(int k=0;k<N;k++)
+        {
+            myfile >> s; myfile >> s;
+            for(int i=0;i<9;i++)
+            {
+                myfile >> s;
+                line[k][i] = s;
+            }
+        }
+    }
+    else
+    {
+        std::cout << "ERROR opening file"<< std::endl;
+    }
+    myfile.close();
+
+    mat::matrix board(9,9);
+    for(int b=0;b<N;b++)
+    {
+        for(int l=0;l<9;l++) // line
+        {
+            s = line[b][l];
+            for(int j=0;j<9;j++)
+            {
+                board(l,j) = s[j]-'0';
+                if ((board(l,j) < 0) || (board(l,j) > 9))
+                    std::cout << "ERROR CELL "<< l << " " << j << " " << board(l,j)  << std::endl;
+//                else
+//                    std::cout << "CELL "<< l << " " << j << " " << board(l,j)  << std::endl;
+            }
+        }
+        long guess = 0;
+        if (solveSudoku(board, guess))
+        {
+            sum += 100*board(0,0)+ 10*board(0,1) + board(0,2) ;
+        }
+    }
+    return sum;
+}
+
 long long Euler095(long long N)
- {
+{
     //14316
     long long r;
     long long k;
@@ -5118,11 +5216,14 @@ int main()
 //    n = Euler093(0); to_file("Euler093", n);
 //    std::cout << "Euler093 " << n << std::endl;
 
-    n = Euler094(1000*1000*1000); to_file("Euler094", n);
-    std::cout << "Euler094 " << n << std::endl;
+//    n = Euler094(1000*1000*1000); to_file("Euler094", n);
+//    std::cout << "Euler094 " << n << std::endl;
+//
+//    n = Euler095(1000*1000); to_file("Euler095", n);
+//    std::cout << "Euler095 " << n << std::endl;
 
-    n = Euler095(1000*1000); to_file("Euler095", n);
-    std::cout << "Euler095 " << n << std::endl;
+    n = Euler096(50); to_file("Euler096", n);
+    std::cout << "Euler096 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
