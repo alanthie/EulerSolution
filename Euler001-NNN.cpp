@@ -5,6 +5,55 @@
 using namespace RationalNS;
 using namespace PRIME;
 
+bool is_square(long long k)
+{
+    long long sr = sqrt(k);
+    return (sr * sr == k);
+}
+
+long long Euler094(long long N)
+ {
+    // Heron's Formula
+    // 518408346
+    long long r;
+    long long sum = 0;
+    long long s;
+    long long c;
+
+    for(long long i=2; 3*i <= 2*N; i++)
+    {
+        {
+            r = 3*i-1;
+            if (r%2 == 0)
+            {
+                s = r/2;
+                if (2*s < N)
+                {
+                    c = i-1;
+                    if (is_square(s*(s - c)))
+                        sum+=2*s;
+                }
+            }
+        }
+        {
+            r = 3*i+1;
+            if (r%2 == 0)
+            {
+                s = r/2;
+                if (2*s < N)
+                {
+                    c = i+1;
+                    if (is_square(s*(s - c)))
+                        sum+=2*s;
+                }
+            }
+        }
+        //if (i%10000 == 0) std::cout << i << " " << area2 << " " << sum << std::endl;
+        if (3*i-1 >= N + 6) break;
+    }
+    return (long long)sum;
+ }
+
 long long do_oper(long long a,long long b,long long c,long long d, std::vector<int> vop)
 {
     RationalNumber r = RationalNumber(a,1);
@@ -146,7 +195,6 @@ long long Euler093(long long N)
                 break;
             }
         }
-        //std::cout << a << b << c << d << " cnt: " << cnt << std::endl;
 
         if (cnt > max_seq_cnt)
         {
@@ -4993,17 +5041,20 @@ int main()
 //    n = Euler089(1000); to_file("Euler089", n);
 //    std::cout << "Euler089 " << n << std::endl;
 //
-    n = Euler090(2); to_file("Euler090", n);
-    std::cout << "Euler090 " << n << std::endl;
+//    n = Euler090(2); to_file("Euler090", n);
+//    std::cout << "Euler090 " << n << std::endl;
+//
+//    n = Euler091(50); to_file("Euler091", n);
+//    std::cout << "Euler091 " << n << std::endl;
+//
+//    n = Euler092(10000000); to_file("Euler092", n);
+//    std::cout << "Euler092 " << n << std::endl;
+//
+//    n = Euler093(0); to_file("Euler093", n);
+//    std::cout << "Euler093 " << n << std::endl;
 
-    n = Euler091(50); to_file("Euler091", n);
-    std::cout << "Euler091 " << n << std::endl;
-
-    n = Euler092(10000000); to_file("Euler092", n);
-    std::cout << "Euler092 " << n << std::endl;
-
-    n = Euler093(0); to_file("Euler093", n);
-    std::cout << "Euler093 " << n << std::endl;
+    n = Euler094(1000*1000*1000); to_file("Euler094", n);
+    std::cout << "Euler094 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
