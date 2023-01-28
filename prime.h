@@ -400,6 +400,38 @@ namespace PRIME
     {
         return atoi(s.data());
     }
-}
 
+    long long sumofFactors(long long n)
+    {
+        // Traversing through all prime factors.
+        long long res = 1;
+        long long k = n;
+        for (long long i = 2; i <= sqrt(n); i++)
+        {
+            long long curr_sum = 1;
+            long long curr_term = 1;
+            while (n % i == 0)
+            {
+                // THE BELOW STATEMENT MAKES
+                // IT BETTER THAN ABOVE METHOD
+                //  AS WE REDUCE VALUE OF n.
+                n = n / i;
+
+                curr_term *= i;
+                curr_sum += curr_term;
+            }
+
+            res *= curr_sum;
+        }
+
+        // This condition is to handle
+        // the case when n is a prime
+        // number greater than 2.
+        if (n >= 2)
+            res *= (1 + n);
+
+        return res - k;
+    }
+
+}
 #endif // PRIME_H_INCLUDED

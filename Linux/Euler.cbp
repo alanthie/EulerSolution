@@ -32,6 +32,7 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="../BigInteger.cpp" />
 		<Unit filename="../Euler/big100.txt" />
 		<Unit filename="../Euler/p042_words.txt" />
 		<Unit filename="../Euler/p059_cipher.txt" />

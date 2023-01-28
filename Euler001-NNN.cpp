@@ -5,6 +5,71 @@
 using namespace RationalNS;
 using namespace PRIME;
 
+long long Euler095(long long N)
+ {
+    //14316
+    long long r;
+    long long k;
+    long long cnt = 0;
+    long long maxcnt = 0;
+    std::vector<long long> vchain;
+    std::map<long long, bool> vmapchain;
+    std::vector<long long> vmaxchain;
+
+    for(long long i=2; i < N; i++)
+    {
+        cnt = 1;
+        r = i;
+        vchain.clear();
+        vmapchain.clear();
+
+        vchain.push_back(r);
+        vmapchain[r] = true;
+
+        while(true)
+        {
+            k = r;
+            r = sumofFactors(k);
+            if (r >= N) break;
+            if (r == 0) break;
+            if (r == 1) break;
+
+            if (vmapchain.find(r) != vmapchain.end())
+            {
+                if (r==i)
+                {
+                    //std::cout << i << "**" << cnt << " "  << vchain.size() << std::endl;
+                    if (cnt > maxcnt)
+                    {
+                        maxcnt = cnt;
+                        vmaxchain = vchain;
+                    }
+                }
+                break;
+            }
+            else
+            {
+                cnt++;
+                vchain.push_back(r);
+                vmapchain[r] = true;
+            }
+        }
+    }
+
+    long long rmin = 99999999999;
+    if (vmaxchain.size() > 0)
+    {
+        for(size_t i=0; i < vmaxchain.size(); i++)
+        {
+            if (vmaxchain[i] < rmin)
+            {
+                rmin = vmaxchain[i];
+            }
+        }
+    }
+    return rmin;
+}
+
 bool is_square(long long k)
 {
     long long sr = sqrt(k);
@@ -5055,6 +5120,9 @@ int main()
 
     n = Euler094(1000*1000*1000); to_file("Euler094", n);
     std::cout << "Euler094 " << n << std::endl;
+
+    n = Euler095(1000*1000); to_file("Euler095", n);
+    std::cout << "Euler095 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
