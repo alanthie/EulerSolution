@@ -31,14 +31,66 @@ namespace PRIME
         }
     };
 
-    constexpr int SIZE_BITSET = (1 << 24) + 1; // > few million number scan (bits) < 64 MB
+    constexpr int SIZE_BITSET = (1 << 28) + 1; // > few million number scan (bits) < 64 MB
     std::bitset<SIZE_BITSET> bitarray;
-    long long last_index_processed = 0;
+    std::atomic<long long> last_index_processed = 0;
     bool array_reset = false;
+
+    long long find_prime_in_bitarray(long long index_prime)
+    {
+        //std::cout << "searching prime index (Sieve of Eratosthenes algo) ... " << index_prime << std::endl;
+        if (array_reset == false)
+        {
+            array_reset = true;
+            bitarray.reset();
+            std::cout << "Primes Eratosthenes array reset ... " << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
+        }
+
+        long long idx = 0;
+        for(long long i = 2; i <= SIZE_BITSET  - 1 ; i++)
+        {
+            if (i % 100 == 1)
+                std::cout << "Primes Eratosthenes search ... " << "last_index_processed:" << last_index_processed << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
+
+            if(bitarray[i] == 0) // prime
+            {
+                idx++;
+                if(idx == index_prime)
+                {
+                    return i;
+                }
+
+                if (i > last_index_processed)
+                {
+                    for(long long j = i+1; j< SIZE_BITSET ; j++)
+                    {
+                        if ( j % i == 0 ) // j a MUILTIPLE of prime i
+                        {
+                            bitarray[j] = 1; // MUILTIPLE of prime
+                        }
+                    }
+                }
+            }
+            last_index_processed = std::max(i, last_index_processed.load());
+        }
+        return 1;
+    }
+
+    //std::thread(fill_bitarray_primes))
+    void fill_bitarray_primes()
+    {
+        long long index_prime = 0;
+        while (last_index_processed < SIZE_BITSET - 1)
+        {
+            index_prime+=10000;
+            find_prime_in_bitarray(index_prime);
+        }
+    }
 
     using prime_type = long long;
     using prime_container = std::vector<long long>;
     std::map<long long, bool> map_prime;
+    std::map<uinteger_t, bool> map_uprime;
 
     bool is_prime(long long n)
     {
@@ -57,12 +109,59 @@ namespace PRIME
         return true;
     }
 
+    bool is_uprime(uinteger_t n)
+    {
+        if (map_uprime.find(n) != map_uprime.end())
+            return true;
+
+        if (n<2) return false;
+        if (n==2) {map_uprime[n]=true;return true;}
+        if (n==666666667) {map_uprime[n]=true;return true;}
+
+        if (n < last_index_processed.load())
+        {
+            long long i = (long long)n;
+            bool b = (bitarray[i] == 0) ? true : false;
+            return b;
+        }
+
+        uinteger_t N = n;
+        for (uinteger_t i=2; i*i <= N; i++)
+        {
+            // a divisor exist
+            if (N % i == 0) return false;
+        }
+        map_uprime[n]=true;
+        return true;
+    }
+
     long long next_prime(long long p, long long n)
     {
         long long N = n;
         for (long long i = p+1; i <= N; i++)
         {
             if (is_prime(i)) return i;
+        }
+        return 2;
+    }
+
+    uinteger_t next_uprime(uinteger_t p, uinteger_t n = 0)
+    {
+        if (n == 0)
+        {
+            uinteger_t i = p+1;
+            while(true)
+            {
+                if (is_uprime(i)) return i;
+                i++;
+            }
+            return 2;
+        }
+
+        uinteger_t N = n;
+        for (uinteger_t i = p+1; i <= N; i++)
+        {
+            if (is_uprime(i)) return i;
         }
         return 2;
     }
@@ -102,10 +201,41 @@ namespace PRIME
 
     uinteger_t upow(long long a, long long b )
     {
+        if (a < 0)
+        {
+            std::cout << "ERROR upow a < 0 " <<std::endl;
+            return 1;
+        }
+        if ( b < 0)
+        {
+            std::cout << "ERROR upow b < 0 " <<std::endl;
+            return 1;
+        }
         uinteger_t r = 1;
         for (long long i = 1; i <= b; i+=1)
             r = r * a;
         return r;
+    }
+
+    uinteger_t power_modulo(uinteger_t a, uinteger_t power, uinteger_t mod)
+    {
+        // (a ⋅ b) mod m = [(a mod m) ⋅ (b mod m)] mod m
+        if (power==0) return 1;
+        if (power%2 == 1) return ((a % mod) * power_modulo(a, power-1, mod)) % mod;
+        uinteger_t b = power_modulo(a, power/2, mod) % mod;
+        return (b*b) % mod;
+    }
+    uinteger_t prod_modulo(uinteger_t a, uinteger_t b, uinteger_t mod)
+    {
+        // (a ⋅ b) mod m = [(a mod m) ⋅ (b mod m)] mod m
+        uinteger_t r = ( a % mod) * ( b % mod);
+        return r % mod;
+    }
+    uinteger_t sum_modulo(uinteger_t a, uinteger_t b, uinteger_t mod)
+    {
+        // (a ⋅ b) mod m = [(a mod m) ⋅ (b mod m)] mod m
+        uinteger_t r = ( a % mod) + ( b % mod);
+        return r % mod;
     }
 
     uinteger_t ufact(long long a )
@@ -288,7 +418,31 @@ namespace PRIME
         return r;
      }
 
-    std::unordered_map<long long, long long> unique_prime_factors(long long k, size_t limit)
+     std::vector<uinteger_t> uprime_factors(uinteger_t k)
+     {
+        std::vector<uinteger_t> r;
+        uinteger_t t = k;
+        for (uinteger_t i = 2; i <= t; i++)
+        {
+            if (t == 1) break;
+            if (is_uprime(t))
+            {
+                r.push_back(t);
+                t = 1;
+            }
+            else if (is_uprime(i))
+            {
+                while(t % i == 0)
+                {
+                    r.push_back(i);
+                    t = t/i;;
+                }
+            }
+        }
+        return r;
+     }
+
+    std::unordered_map<long long, long long> unique_prime_factors(long long k, size_t limit = 0)
     {
         std::unordered_map<long long, long long>r;
         if (is_prime(k)) {r[k]++; return r;}
@@ -304,7 +458,33 @@ namespace PRIME
                     r[i]++;
                     t = t/i;
 
-                    if (r.size() > limit) return r;
+                    if (limit > 0)
+                        if (r.size() > limit) return r;
+                }
+            }
+        }
+        return r;
+    }
+
+    std::map<uinteger_t, long long> unique_uprime_factors(uinteger_t k, size_t limit = 0)
+    {
+        std::map<uinteger_t, long long> r;
+        if (is_uprime(k)) {r[k]++; return r;}
+
+        uinteger_t t = k;
+        for (uinteger_t i = 2; i <= t; i++)
+        {
+            if (t == 1) break;
+            if (is_uprime(i))
+            {
+                while(t % i == 0)
+                {
+                    //std::cout << "[prime :"<<i<<"]" << std::endl;
+                    r[i]++;
+                    t = t/i;
+
+                    if (limit > 0)
+                        if (r.size() > limit) return r;
                 }
             }
         }
@@ -433,5 +613,38 @@ namespace PRIME
         return res - k;
     }
 
+    long long countDivisors(long long n)
+    {
+        long long cnt = 0;
+        for (long long i = 1; i*i <= n; i++) {
+            if (n % i == 0) {
+                // If divisors are equal,
+                // count only one
+                if (n / i == i)
+                    cnt++;
+
+                else // Otherwise count both
+                    cnt = cnt + 2;
+            }
+        }
+        return cnt;
+    }
+
+    uinteger_t ucountDivisors(uinteger_t n)
+    {
+        uinteger_t cnt = 0;
+        for (uinteger_t i = 1; i*i <= n; i++) {
+            if (n % i == 0) {
+                // If divisors are equal,
+                // count only one
+                if (n / i == i)
+                    cnt++;
+
+                else // Otherwise count both
+                    cnt = cnt + 2;
+            }
+        }
+        return cnt;
+    }
 }
 #endif // PRIME_H_INCLUDED

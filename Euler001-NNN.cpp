@@ -5,6 +5,618 @@
 using namespace RationalNS;
 using namespace PRIME;
 
+
+long long largest_prime_divisor_4kplus1(long long k)
+{
+    long long m=1;
+    long long t = k;
+    for (long long i = 2; i <= t; i++)
+    {
+        if (t == 1) break;
+        if (is_prime(i))
+        {
+            while(t % i == 0)
+            {
+                //r.push_back(i);
+                if (i>2)
+                if ((i-1) % 4 == 0)
+                {
+                    m *= i;
+                }
+                t = t/i;;
+            }
+        }
+    }
+    return m;
+}
+std::map<uinteger_t, long long> unique_prime_factors_4k1(uinteger_t k, long long lim)
+{
+    std::map<uinteger_t, long long> vmap;
+    uinteger_t t = k;
+    for (uinteger_t i = 2; i <= t; i++)
+    {
+        if (t == 1) break;
+        if (is_uprime(i))
+        {
+            while(t % i == 0)
+            {
+                //r.push_back(i);
+                if (i>2)
+                if ((i-1) % 4 == 0)
+                {
+                    vmap[i]++;
+                }
+                t = t/i;;
+            }
+        }
+    }
+    return vmap;
+}
+std::map<uinteger_t, long long> unique_prime_factors_4k3(uinteger_t k, long long lim)
+{
+    std::map<uinteger_t, long long> vmap;
+    uinteger_t t = k;
+    for (uinteger_t i = 2; i <= t; i++)
+    {
+        if (t == 1) break;
+        if (is_uprime(i))
+        {
+            while(t % i == 0)
+            {
+                //r.push_back(i);
+                if (i==3)
+                {
+                    vmap[i]++;
+                }
+                else
+                {
+                    if (i>4)
+                    if ((i-3) % 4 == 0)
+                    {
+                        vmap[i]++;
+                    }
+                }
+                t = t/i;;
+            }
+        }
+    }
+    return vmap;
+}
+
+// a,b,n
+long long NumberPythagoreanTriples(long long n)
+{
+//https://www.quora.com/In-which-Pythagorean-triplet-is-41-the-smallest-number
+    if (n==1) return 0;
+    if (n==2) return 0;
+    uinteger_t un = n;
+    long long m = largest_prime_divisor_4kplus1(n); // m==1 otherwise
+    if (n%2==1)
+    {
+        return (long long)( (ucountDivisors(un*un) + ucountDivisors(m*m))/2 - 1);
+    }
+    else
+    {
+        return (long long)( (ucountDivisors(un*un/4) + ucountDivisors(m*m))/2 - 1);
+    }
+}
+
+long long product_primes(long long k)
+{
+    long long p = 3;
+    long long r = 3; k--;
+    while(k > 0)
+    {
+        p = next_prime(p, 10000000);
+        r = r * p;
+        k--;
+    }
+    return r;
+}
+
+//https://mathworld.wolfram.com/PythagoreanTriple.html
+uinteger_t L(uinteger_t k)
+{
+    uinteger_t r = 1;
+    std::map<uinteger_t, long long> vmap = unique_uprime_factors(k, 10000000);
+    if (vmap[2] > 0)
+    {
+        r *= (2*vmap[2] - 1);
+        for(auto& [p, n] : vmap)
+        {
+            if (p!=2)
+                r *= (2*vmap[p] + 1);
+        }
+    }
+    else
+    {
+        for(auto& [p, n] : vmap)
+        {
+            if (p!=2)
+                r *= (2*vmap[p] + 1);
+        }
+    }
+    return (r-1)/2;
+}
+uinteger_t sq_func(uinteger_t k)
+{
+//https://mathworld.wolfram.com/SumofSquaresFunction.html
+    std::map<uinteger_t, long long> vmap3 = unique_prime_factors_4k3(k, 100000000);
+    bool has_half = false;
+    for(auto& [p, n] : vmap3)
+    {
+        if (p!=2)
+        if (vmap3[p] % 2 == 1)
+        {
+            has_half = true;
+            break;
+        }
+    }
+    if (has_half) return 0;
+
+    std::map<uinteger_t, long long> vmap1 = unique_prime_factors_4k1(k, 100000000);
+    long long b = 1;
+    for(auto& [p, n] : vmap1)
+    {
+        b *= (vmap1[p] + 1);
+    }
+    return 4*b;
+}
+
+uinteger_t H(uinteger_t k)
+{
+    return (sq_func(k*k)-4)/8;
+}
+uinteger_t T(uinteger_t k)
+{
+    uinteger_t r = 1;
+    return H(k)+L(k);
+}
+
+std::mutex mutex_Tinverse;
+uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long long& l, long long& m, long long& k11,
+                    long long& k13,long long& k17,long long& k19,long long& k23, long long LIM, long long LIM2
+                    )
+{
+    uinteger_t cnt =0;
+    uinteger_t r;
+    uinteger_t tr;
+    uinteger_t rmin = -1;
+    long long nmin = 0;
+    long long kmin = 0;
+    long long lmin = 0;
+    long long mmin = 0;
+    long long k11min = 0;
+    long long k13min = 0;
+    long long k17min = 0;
+    long long k19min = 0;
+    long long k23min = 0;
+    bool ok = false;
+    long double tlog;
+    long double tminlog = 99999999999;
+
+    long long tt;
+    long long tt_beforeN;
+    long long tt2;
+
+    uinteger_t maxprime;
+    long cntp = 0;
+
+    // CACHE...
+    std::map<long long, std::vector<uinteger_t>> mapcache;
+    std::vector<uinteger_t> vprimes;
+    std::map<uinteger_t, bool> mapprocessed;
+
+    // tt2 5,13,17 => others
+    std::map<long long, std::vector<long long>> map_qp;
+    std::map<long long, bool> mapt2ok;
+    std::vector<long long> vp;
+
+    for(long long ll=0;ll<=LIM;ll++) // 5 = 4k 1 primes
+    {
+
+    for(long long kk13=0;kk13<=LIM2;kk13++)
+    {
+
+    for(long long kk17=0;kk17<=LIM2;kk17++)
+    {
+        tlog = ll*log(5) + kk13*log(13) + kk17*log(17);
+        if (ok)
+        if (tlog > tminlog)
+            break;
+
+    for(long long z=0;z<1;z++)
+    {
+        long long nn = 0;
+        long long kk = 0;
+        long long mm = 0;
+        long long kk11 = 0;
+        long long kk19 = 0;
+        long long kk23 = 0;
+
+        //vq  = {ll, kk13, kk17};
+        tt2 = ( (2*ll+1)*(2*kk13+1)*(2*kk17+1) -1) / 2;
+        if (map_qp.find(tt2) != map_qp.end())
+        {
+            vp = map_qp[tt2];
+            //vp = {nn, kk, mm, kk11, kk19, kk23};
+            nn = vp[0];
+            kk = vp[1];
+            mm = vp[2];
+            kk11 = vp[3];
+            kk19 = vp[4];
+            kk23 = vp[5];
+
+            if (mapt2ok[tt2] == false)
+                break;
+        }
+        else
+        {
+            // GIVEN tt2 deduce all others!
+            //tt  = ( (2*nn-1)*(2*kk+1)*(2*ll+1)*(2*mm+1)*(2*kk11+1)*(2*kk13+1)*(2*kk17+1)*(2*kk19+1)*(2*kk23+1) -1 ) / 2;
+            tt2 = ( (2*ll+1)*(2*kk13+1)*(2*kk17+1) -1) / 2;
+            if (t <= tt2)
+            {
+                continue;
+            }
+
+            long long  temp = 2*(t-tt2) + 1;
+            //std::cout   << "[p:"<<power<<"]" << "[t=" << t << "] "<< "temp="<< temp << std::endl;
+
+            if (mapcache.find(temp) != mapcache.end())
+            {
+                //std::cout   << "[p:"<<power<<"]" << "[t=" << t << "] "<< "vprimes = mapcache[temp]"<< std::endl;
+                vprimes = mapcache[temp];
+            }
+            else
+            {
+                vprimes = uprime_factors(temp);
+                mapcache[temp] = vprimes;
+            }
+
+            for(size_t ii = 0; ii < vprimes.size(); ii++)
+            {
+                mapprocessed[vprimes[ii]]=false;
+            }
+
+            cntp = 0;
+            bool skip[3] = {false, false, false};
+            while(true)
+            {
+                maxprime = 0;
+                for(size_t jj= 0; jj < vprimes.size(); jj++)
+                {
+                    if (mapprocessed[vprimes[jj]]  == false)
+                    {
+                        if (vprimes[jj] > maxprime)
+                        {
+                            maxprime = vprimes[jj];
+                        }
+                    }
+                }
+                if (maxprime == 0) break;
+                //std::cout   << "[p:"<<power<<"]" << "[t=" << t << "] "<< "maxprime "<< maxprime << std::endl;
+                mapprocessed[maxprime] = true;
+
+                if (    ((ll >0)  && (maxprime == 2*ll+1)  && (skip[0]==false)) ||
+                        ((kk13>0) && (maxprime == 2*kk13+1)&& (skip[1]==false)) ||
+                        ((kk17>0) && (maxprime == 2*kk17+1)&& (skip[2]==false)) )
+                {
+                    // skip values already known
+                    if ((ll >0)  && (maxprime == 2*ll +1)       && (skip[0]==false)) skip[0]=true;
+                    else if ((kk13>0) && (maxprime == 2*kk13+1) && (skip[1]==false)) skip[1]=true;
+                    else if ((kk17>0) && (maxprime == 2*kk17+1) && (skip[2]==false)) skip[2]=true;
+                }
+                else
+                {
+                //std::cout   << "[p:"<<power<<"]" << "[t=" << t << "] "<< "cntp "<< cntp << std::endl;
+
+                    if (cntp==0)      nn = (long long) (maxprime+1)/2;
+                    else if (cntp==1) kk = (long long) (maxprime-1)/2;
+                    //5 4k+1
+                    else if (cntp==2)  mm = (long long) (maxprime-1)/2;
+                    else if (cntp==3)  kk11 = (long long) (maxprime-1)/2;
+                    //13 4k+1
+                    //17 4k+1
+                    else if (cntp==4) kk19 = (long long) (maxprime-1)/2;
+                    else if (cntp==5) kk23 = (long long) (maxprime-1)/2;
+                    else if (cntp>5)
+                    {
+                        std::cout << "[p:"<<power<<"]" << "[t=" << t << "] "
+                            <<"****** temp exceed 9 primes..." << temp << std::endl;
+                        break;
+                    }
+                    // 29 4k+1
+                    // 31
+                    // 37 4k+1
+
+                    cntp++;
+                }
+            }
+            vp = {nn, kk, mm, kk11, kk19, kk23};
+            map_qp[tt2] = vp;
+        }
+
+        tlog = nn*log(2) + kk*log(3) + ll*log(5)  + mm*log(7) + kk11*log(11) + kk13*log(13) + kk17*log(17)+ kk19*log(19) + kk23*log(23);
+
+        cnt++;
+        if (cnt%1000==0)
+        {
+            const std::lock_guard<std::mutex> lock(mutex_Tinverse);
+            std::cout << "[p:"<<power<<"]" << "[t=" << t << "] "
+            << "cnt="<< cnt << " lim=" << LIM*LIM*LIM*1
+            << " 5=" << ll
+            << " 13=" << kk13
+            << " 17=" << kk17
+            << " 7=" << mm
+            << " 3=" << kk
+            << " 11=" << kk11
+            << " 19=" << kk19
+            << " 23=" << kk23
+            << " 2=" << nn
+            << " log=" << tlog
+            << " minlog=" << tminlog
+            << " best: "
+            << nmin << " "
+            << kmin << " "
+            << lmin << " "
+            << mmin << " "
+            << k11min << " "
+            << k13min << " "
+            << k17min << " "
+            << k19min << " "
+            << k23min << " "
+            << std::endl;
+        }
+
+        if (ok)
+            if (tlog > tminlog)
+                break;
+
+        {
+            // all vs 4k+3/1
+            tt2 = ( (2*ll+1)*(2*kk13+1)*(2*kk17+1)-1) / 2; //4k+1 = 5, 13 17,
+            tt_beforeN = (2*kk+1)*(2*ll+1)*(2*mm+1)*(2*kk11+1)*(2*kk13+1)*(2*kk17+1)*(2*kk19+1)*(2*kk23+1);
+            if (nn>0)
+            {
+                tt  = ( ((2*nn-1)*tt_beforeN) - 1 ) / 2;
+            }
+            else
+            {
+                tt  = ( tt_beforeN - 1 ) / 2;
+            }
+
+            if (t == tt + tt2)
+            {
+                mapt2ok[tt2] = true;
+
+                //r = upow(2, nn) * upow(3, kk) * upow(5, ll) * upow(7, mm) * upow(11, kk11) * upow(13, kk13);
+                if ((rmin == -1) || (tlog < tminlog))
+                {
+                    if (t < 10000000)
+                        rmin =  upow(2, nn)    * upow(3, kk) * upow(5, ll) * upow(7, mm) *
+                                upow(11, kk11) * upow(13, kk13) * upow(17, kk17) * upow(19, kk19) * upow(23, kk23);
+                    else
+                        rmin = 1234567;
+                    if (rmin > 999999999999999) rmin = 1234567;
+
+                    nmin = nn;
+                    kmin = kk;
+                    lmin = ll;
+                    mmin = mm;
+                    k11min = kk11;
+                    k13min = kk13;
+                    k17min = kk17;
+                    k19min = kk19;
+                    k23min = kk23;
+                    tminlog = tlog;
+                    ok = true;
+                    {
+                        const std::lock_guard<std::mutex> lock(mutex_Tinverse);
+                        std::cout << "[p:"<<power<<"]" << "[t=" << t << "] "
+                            << "tt:"<< tt << " tt2:"  << tt2 << " t:" <<t<< " 2:"
+                            << nn << " 3:"
+                            << kk << " 5:"
+                            << ll << " 7:"
+                            << mm << " 11:"
+                            << kk11<< " 13:"
+                            << kk13 << " 17:"<< kk17 << " "
+                            << kk19 << " 23:"<< kk23 << " r:"
+                            << rmin << " log:" << tlog << std::endl;
+                    }
+                    break;
+                }
+            }
+            else
+            {
+                mapt2ok[tt2] = false;
+            }
+        }
+    }
+    }}}
+    n = nmin;
+    k = kmin;
+    l = lmin;
+    m = mmin;
+    k11 = k11min;
+    k13 = k13min;
+    k17 = k17min;
+    k19 = k19min;
+    k23 = k23min;
+
+    uinteger_t mod = 409120391;
+    rmin =  power_modulo(2, nmin, mod) *
+            power_modulo(3, kmin, mod) *
+            power_modulo(5, lmin, mod) *
+            power_modulo(7,  mmin, mod) *
+            power_modulo(11, k11min, mod) *
+            power_modulo(13, k13min, mod) *
+            power_modulo(17, k17min, mod) *
+            power_modulo(19, k19min, mod) *
+            power_modulo(23, k23min, mod)
+            ;
+    rmin = rmin % mod;
+
+//    rmin = upow(2, nmin) * upow(3, kmin) * upow(5, lmin) * upow(7, mmin) * upow(11, k11min)
+//            * upow(13, k13min) * upow(17, k17min) * upow(19, k19min) * upow(23, k23min);
+    {
+        const std::lock_guard<std::mutex> lock(mutex_Tinverse);
+
+        std::cout << "[p:"<<power<<"]" << "[t=" << t << "] "
+            << "Exit "
+            << n << " "
+            << k << " "
+            << l << " "
+            << m << " "
+            << k11 << " " << k13 << " "<< k17 << " "<< k19 << " "<< k23;
+        std::cout << " result modulo " << rmin << " ";
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+    return rmin;
+}
+
+void run_Tinverse(  int power, uinteger_t& result,
+                    long long t, long long& n, long long& k, long long& l, long long& m, long long& k11,
+                    long long& k13, long long& k17, long long& k19, long long& k23, long long LIM, long long LIM2)
+{
+    uinteger_t r = Tinverse(power, t, n, k, l, m, k11, k13, k17, k19, k23, LIM, LIM2);
+    result  = r;
+}
+
+long long Euler827(long FROM, long long N, long long LIM, long long LIM2)
+{
+    uinteger_t r;
+    uinteger_t sum = 0;
+    long long nn; long long kk; long long ll; long long mm;long long k11;
+    long long k13; long long k17; long long k19; long long k23;
+    std::cout << "T 15 "<< T(15) << std::endl;
+    std::cout << "T 48 "<< T(48) << std::endl;
+    std::cout << "T 8064000 "<< T(8064000) << std::endl;
+
+    int nt = std::thread::hardware_concurrency();
+    std::vector<std::thread> vt;
+    if (nt >= N - FROM + 1)
+    {
+        std::vector<std::thread> vt;
+        std::vector<uinteger_t> vresult(N+1, 0);
+        std::vector<long long> vk(N+1, 0);
+        std::vector<long long> vn(N+1, 0);
+        std::vector<long long> vl(N+1, 0);
+        std::vector<long long> vm(N+1, 0);
+        std::vector<long long> v11(N+1, 0);
+        std::vector<long long> v13(N+1, 0);
+        std::vector<long long> v17(N+1, 0);
+        std::vector<long long> v19(N+1, 0);
+        std::vector<long long> v23(N+1, 0);
+        nt = N - FROM + 1;
+        for (int i=0;i< nt;i++)
+        {
+            long long t = pow(10, FROM+i);
+            vt.push_back(   std::thread(run_Tinverse, FROM+i,
+                                        std::ref(vresult[i]), t,
+                                        std::ref(vn[i]), std::ref(vk[i]), std::ref(vl[i]), std::ref(vm[i]), std::ref(v11[i]),
+                                        std::ref(v13[i]), std::ref(v17[i]), std::ref(v19[i]), std::ref(v23[i]), LIM, LIM2
+                                        )
+                        );
+        }
+        vt.push_back( std::thread(fill_bitarray_primes));
+        for (int j=0;j<nt+1;j++)  vt[j].join();
+
+        std::cout << "DONE LIM: "<< LIM << std::endl;
+        for (int i=0;i< nt;i++)
+        {
+            sum += (vresult[i] % 409120391);
+        }
+        uinteger_t rm = sum % 409120391;
+        std::cout << "SUM modulo " << sum << std::endl;
+
+        std::stringstream ss;
+        for (int i=0;i< nt;i++)
+        {
+            long double tlog =  vn[i] *log(2)  + vk[i] *log(3)  + vl[i] *log(5)  + vm[i]*log(7) +
+                                v11[i]*log(11) + v13[i]*log(13) + v17[i]*log(17) + v19[i]*log(19) + v23[i]*log(23);
+
+            ss   << i+1 << " Lim=" << LIM << ","<< LIM2 << " "
+                 << vn[i]  << " "  << vk[i]  << " "   << vl[i] << " "  << vm[i]  << " " << v11[i] << " "
+                 << v13[i] << " "  << v17[i] << " "   << v19[i]<< " "  << v23[i] << " " <<  (vresult[i] % 409120391) << " "
+                 << tlog
+                 << std::endl;
+        }
+        std::cout << ss.str();
+        to_file("Euler827\n", ss.str());
+        return (long long)sum;
+    }
+    else
+    {
+        for(int i=FROM;i<=N;i++)
+        {
+            long long t = pow(10, i);
+            r = Tinverse(i, t, nn, kk, ll, mm, k11, k13, k17, k19, k23, LIM, LIM2);
+            std::cout << "Tinv "<< t << " " << nn <<  " " << kk <<  " " << ll <<  " " << mm << std::endl;
+            sum += r;
+        }
+        uinteger_t rm = sum % 409120391;
+        std::cout << rm << " ** " << sum << std::endl;
+        return (long long)rm;
+    }
+
+    std::cout << "T 29.. "<< T(29023764480) << std::endl;
+    std::cout << "NumberPythagoreanTriples 12 "<< NumberPythagoreanTriples(12) << std::endl;
+    std::cout << "NumberPythagoreanTriples 15 "<< NumberPythagoreanTriples(15) << std::endl;
+    std::cout << "countDivisors 225 "<< countDivisors(225) << std::endl;
+    std::cout << "countDivisors 1 "<< countDivisors(1) << std::endl;
+    std::cout << "largest_prime_divisor_4kplus1 15 "<< largest_prime_divisor_4kplus1(15) << std::endl;
+    std::cout << "NumberPythagoreanTriples 48 "<< NumberPythagoreanTriples(48) << std::endl;
+    std::cout << "largest_divisor_4kplus1 8064000 "<< largest_prime_divisor_4kplus1(8064000) << std::endl;
+    std::cout << "ucountDivisors 8064000 "<< ucountDivisors(8064000) << std::endl;
+    std::cout << "ucountDivisors 25 "<< ucountDivisors(25) << std::endl;
+    uinteger_t t(8064000); t = t*t/4;
+    std::cout << "ucountDivisors 8064000 8064000/4 "<< ucountDivisors(t) << std::endl;
+    std::cout << "NumberPythagoreanTriples 8064000 "<< NumberPythagoreanTriples(8064000) << std::endl;
+
+    std::vector<uinteger_t> v (N+1, -1);
+
+    int a; std::cin >>a;
+    for(int i=1;i<=N;i++)
+    {
+        if (v[i]!=-1) continue;
+
+        long long k = pow(10, i);
+        r = 2;
+        long long n = 1;
+        while(r < k ) {r = r*2; n++;}
+        //https://www.fq.math.ca/Papers1/46_47-4/Tripathi.pdf
+        long long start = 4 * product_primes(n-3);
+
+        for(int j=start;j<=start+1000000;j++)
+        {
+            if (v[i]!=-1) break;
+
+            if (j==start) std::cout << "start " << j  << " " << k << " "<<std::endl;
+            //r = NumberPythagoreanTriples(j);
+            r = T(j);
+            if (j%100 == 0)
+                std::cout << j  << " " << k << " "<< r <<std::endl;
+
+            for(int ii=1;ii<=N;ii++)
+            {
+                long long x = pow(10, ii);
+                if ((r == x) && (v[ii]==-1))
+                {
+                    v[ii] = r;
+                    sum += j;
+                    std::cout << j << " ** " << k << std::endl;
+                    break;
+                }
+            }
+        }
+    }
+    uinteger_t rm = sum % 409120391;
+    std::cout << rm << " ** " << sum << std::endl;
+    return (long long)rm;
+}
+
 bool solveSudoku(mat::matrix& board, long& guess)
 {
     std::vector<bool> number_remaining(9+1, true); number_remaining[0] = false;
@@ -4494,21 +5106,7 @@ long long number_divisor(long long n)
     }
     return cnt;
 }
-long long countDivisors(long long n)
-{
-    long long cnt = 0;
-    for (int i = 1; i <= sqrt(n); i++)
-    {
-        if (n % i == 0)
-        {
-            if (n / i == i)
-                cnt++;
-            else
-                cnt = cnt + 2;
-        }
-    }
-    return cnt;
-}
+
 
 long long triangle_number(long long n)
 {
@@ -4589,7 +5187,7 @@ long long Euler010(long N)
                 }
 			}
 		}
-		last_index_processed = std::max(i, last_index_processed);
+		last_index_processed = std::max(i, last_index_processed.load());
 	}
 	return sum;
 }
@@ -4771,8 +5369,8 @@ long long find_prime(long long index_prime)
                     }
                 }
 			}
+			last_index_processed = i;
 		}
-		last_index_processed = std::max(i, last_index_processed);
 	}
 	return 1;
 }
@@ -5222,8 +5820,11 @@ int main()
 //    n = Euler095(1000*1000); to_file("Euler095", n);
 //    std::cout << "Euler095 " << n << std::endl;
 
-    n = Euler096(50); to_file("Euler096", n);
-    std::cout << "Euler096 " << n << std::endl;
+//    n = Euler096(50); to_file("Euler096", n);
+//    std::cout << "Euler096 " << n << std::endl;
+
+    n = Euler827(1, 18, 600, 1); to_file("Euler827", n);
+    std::cout << "Euler827 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
