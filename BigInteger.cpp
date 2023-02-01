@@ -255,10 +255,20 @@ BigInteger BigInteger::operator * (BigInteger b)
 //-------------------------------------------------------------
 BigInteger BigInteger::operator / (BigInteger b)
 {
-    uinteger_t au(this->getNumber(), 10);
-    uinteger_t bu(b.getNumber(), 10);
-    uinteger_t ru = au / bu;
-    BigInteger r = BigInteger(ru.str());
+	// TODO
+#ifdef _WIN32
+	uinteger_t au(this->getNumber().data());
+	uinteger_t bu(b.getNumber().data());
+	uinteger_t ru = au / bu;
+	std::stringstream ss; ss << ru;
+	BigInteger r = BigInteger(ss.str());
+#else
+	uinteger_t au(this->getNumber(), 10);
+	uinteger_t bu(b.getNumber(), 10);
+	uinteger_t ru = au / bu;
+	BigInteger r = BigInteger(ru.str());
+#endif
+
     if ( this->getSign() != b.getSign() )
     {
         r.setSign(true);
@@ -281,10 +291,20 @@ BigInteger BigInteger::operator / (BigInteger b)
 //-------------------------------------------------------------
 BigInteger BigInteger::operator % (BigInteger b)
 {
-    uinteger_t au(this->getNumber(), 10);
-    uinteger_t bu(b.getNumber(), 10);
-    uinteger_t ru = au % bu;
-    BigInteger r = BigInteger(ru.str());
+	// TODO
+#ifdef _WIN32
+	uinteger_t au(this->getNumber().data());
+	uinteger_t bu(b.getNumber().data());
+	uinteger_t ru = au % bu;
+	std::stringstream ss; ss << ru;
+	BigInteger r = BigInteger(ss.str());
+#else
+	uinteger_t au(this->getNumber(), 10);
+	uinteger_t bu(b.getNumber(), 10);
+	uinteger_t ru = au % bu;
+	BigInteger r = BigInteger(ru.str());
+#endif
+
     if ( this->getSign() != b.getSign() )
     {
         if (this->getSign() == true)
@@ -393,10 +413,10 @@ bool BigInteger::less(BigInteger n1, BigInteger n2)
 		return n1.getNumber().compare( n2.getNumber() ) > 0; // greater with -ve sign is LESS
 	}
 }
-bool BigInteger::less(BigInteger n1, BigInteger n2) const
-{
-    return less(n1, n2);
-}
+//bool BigInteger::less(BigInteger n1, BigInteger n2) const
+//{
+//    return less(n1, n2);
+//}
 //-------------------------------------------------------------
 bool BigInteger::greater(BigInteger n1, BigInteger n2)
 {
@@ -417,7 +437,7 @@ string BigInteger::add(string number1, string number2)
 	else// if(number1.size() < number2.size())
 		number1.insert(0, differenceInLength, '0');
 
-	for(int i=number1.size()-1; i>=0; --i)
+	for(int i=(int)number1.size()-1; i>=0; --i)
 	{
 		add[i] = ((carry-'0')+(number1[i]-'0')+(number2[i]-'0')) + '0';
 
@@ -453,7 +473,7 @@ string BigInteger::subtract(string number1, string number2)
 	else
 		number1.insert(0, differenceInLength, '0');
 
-	for(int i=number1.length()-1; i>=0; --i)
+	for(int i= (int)number1.length()-1; i>=0; --i)
 	{
 		if(number1[i] < number2[i])
 		{
@@ -477,13 +497,13 @@ string BigInteger::multiply(string n1, string n2)
 		n1.swap(n2);
 
 	string res = "0";
-	for(int i=n1.length()-1; i>=0; --i)
+	for(int i= (int)n1.length()-1; i>=0; --i)
 	{
 		string temp = n2;
 		int currentDigit = n1[i]-'0';
 		int carry = 0;
 
-		for(int j=temp.length()-1; j>=0; --j)
+		for(int j=(int)temp.length()-1; j>=0; --j)
 		{
 			temp[j] = ((temp[j]-'0') * currentDigit) + carry;
 
@@ -519,11 +539,13 @@ pair<string, long long> BigInteger::divide(string n, long long den)
 	long long rem = 0;
 	string result;
 	result.resize(2 * n.length()); // todo
+	char rd;
 
-	for(int indx=0, len = n.length(); indx<len; ++indx)
+	for(int indx=0, len = (int)n.length(); indx<len; ++indx)
 	{
 		rem = (rem * 10) + (n[indx] - '0');
-		result[indx] = rem / den + '0';
+		rd = (char) (rem / den); // TODO
+		result[indx] = rd + '0';
 		rem %= den;
 	}
 	result.resize( n.length() );

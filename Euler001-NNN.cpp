@@ -205,16 +205,16 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
                     long long& k13,long long& k17,long long& k19,long long& k23,long long& k29, long long LIM, long long LIM2
                     )
 {
-    constexpr long double log2 = log(2);
-    constexpr long double log3 = log(3);
-    constexpr long double log5 = log(5);
-    constexpr long double log7 = log(7);
-    constexpr long double log11= log(11);
-    constexpr long double log13 = log(13);
-    constexpr long double log17 = log(17);
-    constexpr long double log19 = log(19);
-    constexpr long double log23 = log(23);
-    constexpr long double log29 = log(29);
+    long double log2 = std::log(2);
+    long double log3 = std::log(3);
+    long double log5 = std::log(5);
+    long double log7 = std::log(7);
+    long double log11= std::log(11);
+    long double log13 = std::log(13);
+    long double log17 = std::log(17);
+    long double log19 = std::log(19);
+    long double log23 = std::log(23);
+    long double log29 = std::log(29);
 
     uinteger_t cnt =0;
     uinteger_t r;
@@ -594,10 +594,10 @@ long long Euler827(long FROM, long long N, long long LIM, long long LIM2, bool d
         std::vector<long long> v19(N+1, 0);
         std::vector<long long> v23(N+1, 0);
         std::vector<long long> v29(N+1, 0);
-        nt = N - FROM + 1;
+        nt = (int)( N - FROM + 1);
         for (int i=0;i< nt;i++)
         {
-            long long t = pow(10, FROM+i);
+            long long t = (long long) pow(10, FROM+i);
             vt.push_back(   std::thread(run_Tinverse, FROM+i,
                                         std::ref(vresult[i]), t,
                                         std::ref(vn[i]), std::ref(vk[i]), std::ref(vl[i]), std::ref(vm[i]), std::ref(v11[i]),
@@ -640,7 +640,7 @@ long long Euler827(long FROM, long long N, long long LIM, long long LIM2, bool d
     {
         for(int i=FROM;i<=N;i++)
         {
-            long long t = pow(10, i);
+            long long t = (long long)pow(10, i);
             r = Tinverse(i, t, nn, kk, ll, mm, k11, k13, k17, k19, k23, k29,LIM, LIM2);
             std::cout << "Tinv "<< t << " " << nn <<  " " << kk <<  " " << ll <<  " " << mm << std::endl;
             sum += r;
@@ -816,7 +816,7 @@ long long Euler095(long long N)
 
 bool is_square(long long k)
 {
-    long long sr = sqrt(k);
+    long long sr = (long long)sqrt(k);
     return (sr * sr == k);
 }
 
@@ -5857,8 +5857,8 @@ int main()
 //    n = Euler096(50); to_file("Euler096", n);
 //    std::cout << "Euler096 " << n << std::endl;
 
-    bool do_sieve = true;
-    n = Euler827(11, 11, 100, 1, do_sieve); to_file("Euler827", n);
+    bool do_sieve = false;
+    n = Euler827(11, 11, 150, 0, do_sieve); to_file("Euler827", n);
     std::cout << "Euler827 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;

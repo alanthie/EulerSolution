@@ -2,7 +2,8 @@
 #define BIGINTEGER_H
 
 #include <string>
-#include "uinteger_t.hh" // compute any size unsigned number
+#include "common.h"
+//#include "uinteger_t.hh" // compute any size unsigned number
 
 //-------------------------------------------------------------
 class BigInteger
@@ -53,7 +54,7 @@ public:
 private:
 	bool equals(BigInteger n1, BigInteger n2);
 	bool less(BigInteger n1, BigInteger n2);
-	bool less(BigInteger n1, BigInteger n2) const;
+	//bool less(BigInteger n1, BigInteger n2) const;
 	bool greater(BigInteger n1, BigInteger n2);
 	std::string add(std::string number1, std::string number2);
 	std::string subtract(std::string number1, std::string number2);

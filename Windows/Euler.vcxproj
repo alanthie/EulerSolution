@@ -136,6 +136,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\BigInteger.cpp" />
     <ClCompile Include="..\Euler001-NNN.cpp" />
     <ClCompile Include="..\rational.cpp" />
   </ItemGroup>
