@@ -31,7 +31,7 @@ namespace PRIME
         }
     };
 
-    constexpr int SIZE_BITSET = (1 << 22) + 1; // > few million number scan (bits) < 64 MB
+    constexpr unsigned int SIZE_BITSET = (1 << 22) + 1; // > few million number scan (bits) < 64 MB
     std::bitset<SIZE_BITSET> bitarray;
     std::atomic<long long> last_index_processed = 0;
     bool array_reset = false;
@@ -50,7 +50,7 @@ namespace PRIME
         for(long long i = 2; i <= SIZE_BITSET  - 1 ; i++)
         {
             if (i % 100000 == 1)
-                std::cout << "Primes Eratosthenes search ... " << "last_index_processed:" << last_index_processed << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
+                std::cout << "Primes Eratosthenes search ... " << "i:" << i << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
 
             if(bitarray[i] == 0) // prime
             {
@@ -425,17 +425,18 @@ namespace PRIME
         for (uinteger_t i = 2; i <= t; i++)
         {
             if (t == 1) break;
-            if (is_uprime(t))
-            {
-                r.push_back(t);
-                t = 1;
-            }
-            else if (is_uprime(i))
+            if (is_uprime(i))
             {
                 while(t % i == 0)
                 {
                     r.push_back(i);
                     t = t/i;;
+                }
+
+                if (is_uprime(t))
+                {
+                    r.push_back(t);
+                    t = 1;
                 }
             }
         }

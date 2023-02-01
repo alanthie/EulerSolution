@@ -178,9 +178,9 @@ uinteger_t T(uinteger_t k)
 //5 Lim=300 205 81 0 1 0 0 0 0 0 166932990 233.029
 //6 Lim=300 9901 0 50 0 0 0 0 0 0 404103978 6943.32
 //7 Lim=300 330 44 5 15 0 0 0 0 0 20393780 314.313
-//8 : 1674 18 8  9 2 0 0 0 0 log=1215
-//9 : 1429 56 3 29 2 0 0 1 0 log=1121 * solution may exceed 9 primes 1999999155=3 x 5 x 7 x 11 x 23 x 79 x 953
-//10 1855 131 0 14 3 0 0 0 0 50 1631.51
+//8 Lim=300 1674 18 8 9 2 0 0 0 0 167433903 1215.29
+//9 Lim=100,1 1429 56 3 29 2 0 0 1 0 0 182819963 1121.03
+//10 Lim=300 1855 131 50 14 3 0 0 0 0 272277415 1544.61
 std::mutex mutex_Tinverse;
 bool TCheck(int power,  long long t, long long nn, long long kk, long long ll, long long mm, long long kk11,
                         long long kk13,long long kk17,long long kk19,long long kk23,long long kk29)
@@ -205,6 +205,17 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
                     long long& k13,long long& k17,long long& k19,long long& k23,long long& k29, long long LIM, long long LIM2
                     )
 {
+    constexpr long double log2 = log(2);
+    constexpr long double log3 = log(3);
+    constexpr long double log5 = log(5);
+    constexpr long double log7 = log(7);
+    constexpr long double log11= log(11);
+    constexpr long double log13 = log(13);
+    constexpr long double log17 = log(17);
+    constexpr long double log19 = log(19);
+    constexpr long double log23 = log(23);
+    constexpr long double log29 = log(29);
+
     uinteger_t cnt =0;
     uinteger_t r;
     uinteger_t tr;
@@ -257,8 +268,8 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
             k19min = 1;
             k23min = 0;
             k29min = 0;
-            tminlog =   nmin*log(2) + kmin*log(3) + lmin*log(5)  + mmin*log(7) + k11min*log(11) +
-                        k13min*log(13) + k17min*log(17)+ k19min*log(19) + k23min*log(23) + k29min*log(29);
+            tminlog =   nmin*log2 + kmin*log3 + lmin*log5  + mmin*log7 + k11min*log11 +
+                        k13min*log13 + k17min*log17+ k19min*log19 + k23min*log23 + k29min*log29;
             ok = true;
         }
     }
@@ -266,33 +277,16 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
     for(long long ll=0;ll<=LIM;ll++) // 5 = 4k+1 primes
     {
         // Biggest number bucket of 4k+1 primes since minimize the lowest number found (tminlog)
-        if (ok)
-        {
-            tlog = ll*log(5);
-            if (tlog > tminlog)
-                break;
-        }
 
     for(long long kk13=0;kk13<=LIM2;kk13++)
     {
         if (kk13 > ll) continue;
-        if (ok)
-        {
-            tlog = ll*log(5) + kk13*log(13);
-            if (tlog > tminlog)
-                break;
-        }
+
 
     for(long long kk17=0;kk17<=LIM2;kk17++)
     {
         if (kk17 > ll) continue;
         if (kk17 > kk13) continue;
-        if (ok)
-        {
-            tlog = ll*log(5) + kk13*log(13) + kk17*log(17);
-            if (tlog > tminlog)
-                break;
-        }
 
     for(long long kk29=0;kk29<=LIM2;kk29++)
     {
@@ -301,7 +295,7 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
         if (kk29 > kk17) continue;
         if (ok)
         {
-            tlog = ll*log(5) + kk13*log(13) + kk17*log(17) + kk29*log(29);
+            tlog = ll*log5 + kk13*log13 + kk17*log17 + kk29*log29;
             if (tlog > tminlog)
                 break;
         }
@@ -414,11 +408,11 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
             map_qp[tt2] = vp;
         }
 
-        tlog =  nn*log(2) + kk*log(3) + ll*log(5)  + mm*log(7) + kk11*log(11) +
-                kk13*log(13) + kk17*log(17)+ kk19*log(19) + kk23*log(23) + kk29*log(29);
+        tlog =  nn*log2 + kk*log3 + ll*log5  + mm*log7 + kk11*log11 +
+                kk13*log13 + kk17*log17+ kk19*log19 + kk23*log23 + kk29*log29;
 
         cnt++;
-        if (cnt%100==0)
+        //if (cnt%10==0)
         {
             const std::lock_guard<std::mutex> lock(mutex_Tinverse);
             std::cout << "[p:"<<power<<"]" << "[t=" << t << "] "
@@ -631,7 +625,7 @@ long long Euler827(long FROM, long long N, long long LIM, long long LIM2, bool d
                                 v11[i]*log(11) + v13[i]*log(13) + v17[i]*log(17) + v19[i]*log(19)
                                 + v23[i]*log(23)+ v29[i]*log(29);
 
-            ss   << i+1 << " Lim=" << LIM << ","<< LIM2 << " "
+            ss   << FROM+i+1 << " Lim=" << LIM << ","<< LIM2 << " "
                  << vn[i]  << " "  << vk[i]  << " "   << vl[i] << " "  << vm[i]  << " " << v11[i] << " "
                  << v13[i] << " "  << v17[i] << " "   << v19[i]<< " "  << v23[i] << " " << v29[i] << " "
                  << (vresult[i] % 409120391) << " "
@@ -5863,8 +5857,8 @@ int main()
 //    n = Euler096(50); to_file("Euler096", n);
 //    std::cout << "Euler096 " << n << std::endl;
 
-    bool do_sieve = false;
-    n = Euler827(1, 9, 200, 1, do_sieve); to_file("Euler827", n);
+    bool do_sieve = true;
+    n = Euler827(11, 11, 100, 1, do_sieve); to_file("Euler827", n);
     std::cout << "Euler827 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
