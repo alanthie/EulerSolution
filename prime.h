@@ -418,7 +418,7 @@ namespace PRIME
         return r;
      }
 
-     std::vector<uinteger_t> uprime_factors(uinteger_t k)
+     std::vector<uinteger_t> uprime_factors(uinteger_t k, bool stop_ifbiggerprime = false, long long prime_limit = 0, std::vector<long long> vp = {})
      {
         std::vector<uinteger_t> r;
         uinteger_t t = k;
@@ -431,6 +431,16 @@ namespace PRIME
                 {
                     r.push_back(i);
                     t = t/i;;
+
+                    if (stop_ifbiggerprime)
+                    {
+                        if (i >= prime_limit)
+                        {
+                            if (vp.size() == 3)
+                            if ((i!=vp[0]) && (i!=vp[1]) && (i!=vp[2]))
+                                return r;
+                        }
+                    }
                 }
 
                 if (is_uprime(t))
