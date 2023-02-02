@@ -401,14 +401,14 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
                 // EXPENSIVE finding big primes factors
 
                 // first (maxprime+1)/2 will be the biggest prime number found in temp
-                // stop if tminlog <= (maxprime+1)/2 *log2 + ll*log5 + kk17*log17 + kk29*log29;
-                // exclude list... ll kk17 kk29
+                // stop if tminlog <= (maxprime+1)/2 *log2 + ll*log5 + kk13*log13  k17*log17 + kk29*log29;
+                // exclude list... ll kk13 kk17 kk29
                 vp = {};
                 if (ok)
                 {
-                    nn_limit = 2 * (tminlog - ( (ll*log5 + kk17*log17 + kk29*log29) / log2 ) ) - 1;
+                    nn_limit = 2 * (tminlog - ( (ll*log5 + kk13*log13 + kk17*log17 + kk29*log29) / log2 ) ) - 1;
                     if (nn_limit <= 0) break;
-                    vp = { ll, kk17, kk29};
+                    vp = { ll, kk13, kk17, kk29};
                 }
 
                 vprimes = uprime_factors(temp, ok, nn_limit, vp);
@@ -5946,7 +5946,7 @@ int main()
     }
     else
     {
-        int N = 12;
+        int N = 13;
         int nt = 30;
         int STEP = 20;
         std::vector<std::thread> vt;

@@ -437,8 +437,12 @@ namespace PRIME
                         if (i >= prime_limit)
                         {
                             if (vp.size() == 3)
-                            if ((i!=vp[0]) && (i!=vp[1]) && (i!=vp[2]))
-                                return r;
+                                if ((i!=vp[0]) && (i!=vp[1]) && (i!=vp[2]))
+                                    return r;
+
+                            if (vp.size() == 4)
+                                if ((i != vp[0]) && (i != vp[1]) && (i != vp[2]) && (i != vp[3]))
+                                    return r;
                         }
                     }
                 }
