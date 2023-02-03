@@ -170,6 +170,16 @@ uinteger_t T(uinteger_t k)
     uinteger_t r = 1;
     return H(k)+L(k);
 }
+//1 Lim=[0,100,0] 4 1 0 0 0 0 0 0 0 0 48 3.8712
+//2 Lim=[0,100,0] 34 1 0 0 0 0 0 0 0 0 399558677 24.6656
+//2 Lim=[0,100,50] 9 5 2 0 0 1 0 0 0 0 40435200 17.5152
+//3 Lim=[0,100,0] 10 2 3 1 0 0 0 0 0 0 8064000 15.9029
+//4 Lim=[0,100,0] 7 3 36 1 0 0 0 0 0 0 236068631 68.0335
+//5 Lim=[0,100,0] 205 81 0 1 0 0 0 0 0 0 166932990 233.029
+//6 Lim=[0,100,0] 9901 0 50 0 0 0 0 0 0 0 404103978 6943.32
+//7 Lim=[0,100,0] 330 44 5 15 0 0 0 0 0 0 20393780 314.313
+//8 Lim=[0,100,0] 1674 18 8 9 2 0 0 0 0 0 167433903 1215.29
+//9 Lim=[0,100,0] 66 51 38 5 3 0 0 2 2 0 76363019 192.019
 
 //1 Lim=300 4 1 0 0 0 0 0 0 0 48 3.8712
 //2 Lim=300 34 1 0 0 0 0 0 0 0 399558677 24.6656
@@ -204,6 +214,136 @@ bool TCheck(int power,  long long t, long long nn, long long kk, long long ll, l
     if (t == tt + tt2) return true;
     return false;
 }
+
+//https://www.scribd.com/document/255219409/Albert-H-Beiler-Recreations-in-the-theory-of-numbers-the-queen-of-mathematics-entertains-1966-pdf#
+std::map<long long, long long> Tinverse(int power, long long t)
+{
+    std::map<long long, long long> rmap;
+    std::map<long long, long long> rbestmap;
+    long double tlog;
+    long double tminlog = 99999999999;
+
+    std::cout << "power "<< power << " ";std::cout << std::endl;
+
+    long long T2_2 =  2*(t+1);
+    std::cout << "divisorsof "<< T2_2 << " ";std::cout << std::endl;
+    std::vector<long long> v = divisors(T2_2);
+
+    long long factor1; long long factor2;
+    long long odd_factor;
+    long long even_factor;
+    for(size_t i = 0; i< v.size()/2;i++)
+    {
+        factor1 = v[i];
+        factor2 = (T2_2 / v[i]);
+
+        rmap.clear();
+
+        if (factor1%2 == 0) even_factor = factor1;
+        else if (factor2%2 == 0) even_factor = factor2;
+        else even_factor=0;
+
+        if (factor1%2 == 1) odd_factor = factor1;
+        else if (factor2%2 == 1) odd_factor = factor2;
+        else odd_factor=0;
+
+        std::vector<long long> vexponenta;
+        std::vector<long long> vexponentb;
+        if (odd_factor>0)
+        {
+            std::cout << "prime_factors of "<< odd_factor << " ";std::cout << std::endl;
+            std::vector<long long> vp = prime_factors(odd_factor);
+            for(size_t j = 0; j< vp.size();j++)
+            {
+                vexponentb.push_back( (vp[j]-1)/2 );
+            }
+        }
+
+        if (even_factor>0)
+        {
+            std::cout << "prime_factors of "<< even_factor-1 << " ";std::cout << std::endl;
+            std::vector<long long> vp = prime_factors(even_factor-1);
+            long long cnt=0;
+
+            if (even_factor==2) vexponenta.push_back( 1 );
+            for(size_t j = 0; j< vp.size();j++)
+            {
+                {
+                    if (cnt==0)
+                        vexponenta.push_back( (vp[vp.size() - j - 1] + 1)/2 );
+                    else
+                        vexponenta.push_back( (vp[vp.size() - j - 1]-1)/2 );
+                    cnt++;
+                }
+            }
+        }
+
+        long long prime = 2;
+        for(size_t j = 0; j< vexponenta.size();j++)
+        {
+            if (j == 0)
+            {
+                if (vexponenta[0] > 1)
+                    rmap[prime] = vexponenta[0];
+            }
+            else
+            {
+                //4k+3
+                while( (prime < 3) || ((prime - 3) % 4 != 0))
+                {
+                    prime = next_prime(prime, prime*prime);
+                }
+                rmap[prime] = vexponenta[j];
+            }
+            prime = next_prime(prime, prime*prime);
+        }
+
+
+        prime = 5;
+        for(size_t j = 0; j< vexponentb.size();j++)
+        {
+            {
+                //4k+1
+                while( ((prime - 1) % 4 != 0) )
+                {
+                    prime = next_prime(prime, prime*prime);
+                }
+                rmap[prime] = vexponentb[vexponentb.size() - j - 1];
+                prime = next_prime(prime, prime*prime);
+            }
+        }
+
+        std::cout << factor1 <<"-"<< factor2 << " : ";
+
+        std::cout << " vb:";
+        for(size_t j = 0; j< vexponentb.size();j++)
+        {
+            std::cout << vexponentb[j] << " ";
+        }
+        std::cout << " va:";
+        for(size_t j = 0; j< vexponenta.size();j++)
+        {
+            std::cout << vexponenta[j] << " ";
+        }
+
+        tlog = 0;
+        for(auto& [a,b] : rmap)
+        {
+            tlog += b * log(a);
+            std::cout << a <<"-"<< b << " ";
+        }
+
+        if (tlog < tminlog)
+        {
+            tminlog = tlog;
+            rbestmap = rmap;
+            std::cout  << "tminlog " << tminlog << " ";
+        }
+        std::cout << std::endl;
+    }
+    return rbestmap;
+}
+
 
 uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long long& l, long long& m, long long& k11,
                     long long& k13,long long& k17,long long& k19,long long& k23,long long& k29,
@@ -246,12 +386,6 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
 
     uinteger_t maxprime;
     long cntp = 0;
-    long long nn = 0;
-    long long kk = 0;
-    long long mm = 0;
-    long long kk11 = 0;
-    long long kk19 = 0;
-    long long kk23 = 0;
 
     // CACHE
     std::map<long long, std::vector<uinteger_t>> mapcache;
@@ -263,93 +397,29 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
     std::map<long long, bool> mapt2ok;
     std::vector<long long> vp;
 
-    // INIT from previous run
-    if (power==9)
-    {
-        if (TCheck(power, t, 1429, 56, 3, 29, 2, 0, 0, 1, 0, 0) == true)
-        {
-            //9 : 1429 56 3 29 2 0 0 1 0 log=1121
-            std::cout   << "[p:"<<power<<"]" << "[t=" << t << "] INIT " << std::endl;
-            rmin = 1234567;
-            nmin = 1429;
-            kmin = 56;
-            lmin = 3;
-            mmin = 29;
-            k11min = 2;
-            k13min = 0;
-            k17min = 0;
-            k19min = 1;
-            k23min = 0;
-            k29min = 0;
-            tminlog =   nmin*log2 + kmin*log3 + lmin*log5  + mmin*log7 + k11min*log11 +
-                        k13min*log13 + k17min*log17+ k19min*log19 + k23min*log23 + k29min*log29;
-            ok = true;
-        }
-    }
-    if (power==10)
-    {
-        if (TCheck(power, t, 1855, 131, 50, 14, 3, 0, 0, 0, 0, 0) == true)
-        {
-            //10 Lim=300 1855 131 50 14 3 0 0 0 0 272277415 1544.61
-            std::cout   << "[p:"<<power<<"]" << "[t=" << t << "] INIT " << std::endl;
-            rmin = 1234567;
-            nmin = 1855;
-            kmin = 131;
-            lmin = 50;
-            mmin = 14;
-            k11min = 3;
-            k13min = 0;
-            k17min = 0;
-            k19min = 0;
-            k23min = 0;
-            k29min = 0;
-            tminlog =   nmin*log2 + kmin*log3 + lmin*log5  + mmin*log7 + k11min*log11 +
-                        k13min*log13 + k17min*log17+ k19min*log19 + k23min*log23 + k29min*log29;
-            ok = true;
-        }
-    }
-    if (power==11)
-    {
-        if (TCheck(power, t, 447586, 534, 5, 9, 0, 0, 0, 0, 0, 0) == true)
-        {
-            //11 447586 534 5 9 0 0 0 0 0 0
-            std::cout   << "[p:"<<power<<"]" << "[t=" << t << "] INIT " << std::endl;
-            rmin = 1234567;
-            nmin = 447586;
-            kmin = 534;
-            lmin = 5;
-            mmin = 9;
-            k11min = 0;
-            k13min = 0;
-            k17min = 0;
-            k19min = 0;
-            k23min = 0;
-            k29min = 0;
-            tminlog =   nmin*log2 + kmin*log3 + lmin*log5  + mmin*log7 + k11min*log11 +
-                        k13min*log13 + k17min*log17+ k19min*log19 + k23min*log23 + k29min*log29;
-            ok = true;
-        }
-    }
-
     for(long long ll=LIM0;ll<=LIM;ll++) // 5 = 4k+1 primes
     {
         // Biggest number bucket of 4k+1 primes since minimize the lowest number found (tminlog)
+        {
+            const std::lock_guard<std::mutex> lock(mutex_Tinverse);
+            std::cout<< "5=>"<<  ll << std::endl;
+        }
 
     for(long long kk13=0;kk13<=LIM2;kk13++)
     {
-        if (kk13 > ll) continue;
+        if (kk13 > ll) break;
 
 
     for(long long kk17=0;kk17<=LIM2;kk17++)
     {
-        if (kk17 > ll) continue;
-        if (kk17 > kk13) continue;
+        if (kk17 > ll) break;
+        if (kk17 > kk13) break;
 
     for(long long kk29=0;kk29<=LIM2;kk29++)
     {
-        if (kk29 > ll) continue;
-        if (kk29 > kk13) continue;
-        if (kk29 > kk17) continue;
+        if (kk29 > ll) break;
+        if (kk29 > kk13) break;
+        if (kk29 > kk17) break;
         if (ok)
         {
             tlog = ll*log5 + kk13*log13 + kk17*log17 + kk29*log29;
@@ -359,31 +429,7 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
 
     for(long long z=0;z<1;z++)
     {
-        nn = 0;
-        kk = 0;
-        mm = 0;
-        kk11 = 0;
-        kk19 = 0;
-        kk23 = 0;
 
-        // tt2  = {ll, kk13, kk17, kk29};
-        tt2 = ( (2*ll+1)*(2*kk13+1)*(2*kk17+1)*(2*kk29+1) -1) / 2;
-        if (map_qp.find(tt2) != map_qp.end())
-        {
-            vp = map_qp[tt2];
-            //vp = {nn, kk, mm, kk11, kk19, kk23};
-            nn = vp[0];
-            kk = vp[1];
-            mm = vp[2];
-            kk11 = vp[3];
-            kk19 = vp[4];
-            kk23 = vp[5];
-
-            if (mapt2ok[tt2] == false)
-                break;
-        }
-        else
-        {
             // GIVEN tt2 deduce all others!
             tt2 = ( (2*ll+1)*(2*kk13+1)*(2*kk17+1)*(2*kk29+1) -1) / 2;
             if (t <= tt2)
@@ -391,207 +437,205 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
                 continue;
             }
 
-            long long  temp = 2*(t-tt2) + 1;
-            if (mapcache.find(temp) != mapcache.end())
+            long long r4k_1 = (2*ll+1)*(2*kk13+1)*(2*kk17+1)*(2*kk29+1);
+            long long temp = 2*(t-tt2) + 1;
+            long long r0 = temp; // all r4k_1 * r4k_3
+            if (r0 % r4k_1 == 0)
             {
-                vprimes = mapcache[temp];
+                r0 = r0 / r4k_1; //19*5* *3
             }
-            else
+            // 2*10k+2 = r4k_1 * r4k_3
+            // 10 2 3 1 19*5*7*3 -1/2 + 7-1/2
+            long long nn=0;
+            for(long long zzn=1;zzn<=(r0+1)/2;zzn++) // toooooo many
             {
-                // EXPENSIVE finding big primes factors
-
-                // first (maxprime+1)/2 will be the biggest prime number found in temp
-                // stop if tminlog <= (maxprime+1)/2 *log2 + ll*log5 + kk13*log13  k17*log17 + kk29*log29;
-                // exclude list... ll kk13 kk17 kk29
-                vp = {};
-                if (ok)
+                if ((2*zzn-1) <= r0)
+                if (r0 % (2*zzn-1) == 0) // all odd divisors
                 {
-                    nn_limit = 2 * (tminlog - ( (ll*log5 + kk13*log13 + kk17*log17 + kk29*log29) / log2 ) ) - 1;
-                    if (nn_limit <= 0) break;
-                    vp = { ll, kk13, kk17, kk29};
-                }
+                    nn = zzn;
 
-                vprimes = uprime_factors(temp, ok, nn_limit, vp);
-                if (ok)
-                {
-                    if (vprimes[vprimes.size()-1] >= nn_limit)
+                    long long r2 = r0 / (2*nn-1);
+
+                    long long kk=0;
+                    for(long long zz3=0;zz3<=(r2+1)/2;zz3++)
                     {
-                        break;
-                    }
-                }
-
-                mapcache[temp] = vprimes;
-            }
-
-            for(size_t ii = 0; ii < vprimes.size(); ii++)
-            {
-                mapprocessed[vprimes[ii]]=false;
-            }
-
-            cntp = 0;
-            bool skip[4] = {false, false, false, false};
-            while(true)
-            {
-                maxprime = 0;
-                for(size_t jj= 0; jj < vprimes.size(); jj++)
-                {
-                    if (mapprocessed[vprimes[jj]]  == false)
-                    {
-                        if (vprimes[jj] > maxprime)
+                        if (zz3 <= nn)
+                        if ((2*zz3+1) <= r2)
                         {
-                            maxprime = vprimes[jj];
+                            if (r2 % (2*zz3+1) == 0)
+                            {
+                                 kk = zz3;
+                            }
+                            long long r3 = r2 / (2*kk+1);
+
+                            tlog = nn*log2 + ll*log5 + kk13*log13 + kk17*log17 + kk29*log29;
+                            if (tlog > tminlog) break;
+
+                            {
+
+                                for(long long mm=0;mm<=(r3+1)/2;mm++)
+                                {
+                                    if (mm <= kk)
+                                    if ((2*mm+1) <= r3)
+                                    if (r3 % (2*mm+1) == 0)
+                                    {
+                                        long long rmm = r3/(2*mm+1) ;
+                                        tlog = mm*log7 + kk*log3 + nn*log2 + ll*log5 + kk13*log13 + kk17*log17 + kk29*log29;
+                                        if (tlog > tminlog) break;
+
+                                        for(long long kk11=0;kk11<=(rmm+1)/2;kk11++)
+                                        {
+                                            if (kk11 <= mm)
+                                            if ((2*kk11+1) <= rmm)
+                                            if (rmm % (2*kk11+1) == 0)
+                                            {
+                                                long long rkk11 = rmm/(2*kk11+1) ;
+                                                tlog = kk11*log11 + mm*log7 + kk*log3 + nn*log2 + ll*log5 + kk13*log13 + kk17*log17 + kk29*log29;
+                                                if (tlog > tminlog) break;
+
+                                                for(long long kk19=0;kk19<=(rkk11+1)/2;kk19++)
+                                                {
+                                                    if (kk19 <= kk11)
+                                                    if ((2*kk19+1) <= rkk11)
+                                                    if (rkk11 % (2*kk19+1) == 0)
+                                                    {
+                                                        long long rkk19 = rkk11/(2*kk19+1) ;
+                                                        tlog = kk19*log19 + kk11*log11 + mm*log7 + kk*log3 + nn*log2 + ll*log5 + kk13*log13 + kk17*log17 + kk29*log29;
+                                                        if (tlog > tminlog) break;
+
+                                                        for(long long kk23=0;kk23<=(rkk19+1)/2;kk23++)
+                                                        {
+                                                            if (kk23 <= kk19)
+                                                            if ((2*kk23+1) <= rkk19)
+                                                            if (rkk19 % (2*kk23+1) == 0)
+                                                            {
+                                                                long long rkk23 = rkk19/(2*kk23+1) ;
+
+                                                                tt_beforeN = (2*kk+1)*(2*ll+1)*(2*mm+1)*(2*kk11+1)*(2*kk13+1)*(2*kk17+1)*(2*kk19+1)*(2*kk23+1)*(2*kk29+1);
+                                                                if (nn>0)
+                                                                {
+                                                                    tt  = ( ((2*nn-1)*tt_beforeN) - 1 ) / 2;
+                                                                }
+                                                                else
+                                                                {
+                                                                    tt  = ( tt_beforeN - 1 ) / 2;
+                                                                }
+
+                                                                if (t == tt + tt2)
+                                                                if (rkk23 == 1)
+                                                                {
+                                                                    tlog =  nn*log2 + kk*log3 + ll*log5  + mm*log7 + kk11*log11 +
+                                                                        kk13*log13 + kk17*log17+ kk19*log19 + kk23*log23 + kk29*log29;
+
+                                                                    {
+                                                                        const std::lock_guard<std::mutex> lock(mutex_Tinverse);
+                                                                        std::cout
+                                                                            << "Test [p:"<<power<<"]" << "[t=" << t << "] "
+                                                                            << " Lim=[" << LIM0 << ","<< LIM << ","<< LIM2 << "] "
+                                                                            << "[tt:"<< tt << " tt2:"  << tt2 << "] "
+                                                                            << "[5=" << ll
+                                                                            << " 13=" << kk13
+                                                                            << " 17=" << kk17
+                                                                            << " 29=" << kk29
+                                                                            << "]"
+                                                                            << " 2:"
+                                                                            << nn << " 3:"
+                                                                            << kk << " 5:"
+                                                                            << ll << " 7:"
+                                                                            << mm << " 11:"
+                                                                            << kk11<< " 13:"
+                                                                            << kk13 << " 17:"<< kk17 << " "
+                                                                            << kk19 << " 23:"<< kk23 << " 29:"<< kk29  << " rmin:"
+                                                                            << rmin << " log:" << tlog
+                                                                            << " minlog=" << tminlog
+                                                                            << " best: "
+                                                                            << nmin << " "
+                                                                            << kmin << " "
+                                                                            << lmin << " "
+                                                                            << mmin << " "
+                                                                            << k11min << " "
+                                                                            << k13min << " "
+                                                                            << k17min << " "
+                                                                            << k19min << " "
+                                                                            << k23min << " "
+                                                                            << k29min << " "
+                                                                            << " remain `"<< rkk23
+                                                                            << std::endl;
+                                                                    }
+
+                                                                    if (t == tt + tt2)
+                                                                    if (rkk23 == 1)
+                                                                    if ((rmin == -1) || (tlog < tminlog))
+                                                                    {
+                                                                        if (t < 10000000)
+                                                                            rmin =  upow(2, nn)    * upow(3, kk)    * upow(5, ll)    * upow(7, mm) *
+                                                                                    upow(11, kk11) * upow(13, kk13) * upow(17, kk17) * upow(19, kk19) *
+                                                                                    upow(23, kk23) * upow(29, kk29);
+                                                                        else
+                                                                            rmin = 1234567;
+                                                                        if (rmin > 999999999999999) rmin = 1234567;
+
+                                                                        nmin = nn;
+                                                                        kmin = kk;
+                                                                        lmin = ll;
+                                                                        mmin = mm;
+                                                                        k11min = kk11;
+                                                                        k13min = kk13;
+                                                                        k17min = kk17;
+                                                                        k19min = kk19;
+                                                                        k23min = kk23;
+                                                                        k29min = kk29;
+                                                                        tminlog = tlog;
+                                                                        ok = true;
+                                                                        {
+                                                                            const std::lock_guard<std::mutex> lock(mutex_Tinverse);
+                                                                            std::cout
+                                                                                << "NEW [p:"<<power<<"]" << "[t=" << t << "] "
+                                                                                << " Lim=[" << LIM0 << ","<< LIM << ","<< LIM2 << "] "
+                                                                                << "[tt:"<< tt << " tt2:"  << tt2 << "] "
+                                                                                << "[5=" << ll
+                                                                                << " 13=" << kk13
+                                                                                << " 17=" << kk17
+                                                                                << " 29=" << kk29
+                                                                                << "]"
+                                                                                << " 2:" << nn << " 3:"
+                                                                                << kk << " 5:"
+                                                                                << ll << " 7:"
+                                                                                << mm << " 11:"
+                                                                                << kk11<< " 13:"
+                                                                                << kk13 << " 17:"<< kk17 << " "
+                                                                                << kk19 << " 23:"<< kk23 << " 29:"<< kk29  << " rmin:"
+                                                                                << rmin << " log:" << tlog
+                                                                                << " minlog=" << tminlog
+                                                                                << " best: "
+                                                                                << nmin << " "
+                                                                                << kmin << " "
+                                                                                << lmin << " "
+                                                                                << mmin << " "
+                                                                                << k11min << " "
+                                                                                << k13min << " "
+                                                                                << k17min << " "
+                                                                                << k19min << " "
+                                                                                << k23min << " "
+                                                                                << k29min << " "
+                                                                                << std::endl;
+                                                                        }
+                                                                        //break;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-                if (maxprime == 0) break;
-                mapprocessed[maxprime] = true;
-
-                if (    ((ll >0)  && (maxprime == 2*ll+1)  && (skip[0]==false)) ||
-                        ((kk13>0) && (maxprime == 2*kk13+1)&& (skip[1]==false)) ||
-                        ((kk17>0) && (maxprime == 2*kk17+1)&& (skip[2]==false)) ||
-                        ((kk29>0) && (maxprime == 2*kk29+1)&& (skip[3]==false)) )
-                {
-                    // skip values already known
-                    if ((ll >0)  && (maxprime == 2*ll +1)       && (skip[0]==false)) skip[0]=true;
-                    else if ((kk13>0) && (maxprime == 2*kk13+1) && (skip[1]==false)) skip[1]=true;
-                    else if ((kk17>0) && (maxprime == 2*kk17+1) && (skip[2]==false)) skip[2]=true;
-                    else if ((kk29>0) && (maxprime == 2*kk29+1) && (skip[3]==false)) skip[3]=true;
-                }
-                else
-                {
-                    if (cntp==0)      nn = (long long) (maxprime+1)/2;
-                    else if (cntp==1) kk = (long long) (maxprime-1)/2;
-                    //5 4k+1
-                    else if (cntp==2)  mm = (long long) (maxprime-1)/2;
-                    else if (cntp==3)  kk11 = (long long) (maxprime-1)/2;
-                    //13 4k+1
-                    //17 4k+1
-                    else if (cntp==4) kk19 = (long long) (maxprime-1)/2;
-                    else if (cntp==5) kk23 = (long long) (maxprime-1)/2;
-                    // 29 4k+1
-                    else if (cntp>5)
-                    {
-                        std::cout   << "[p:"<<power<<"]" << "[t=" << t << "] "
-                                    << "****** temp exceed 10 primes..." << temp << std::endl;
-                        break;
-                    }
-                    // 31
-                    // 37 4k+1
-
-                    cntp++;
-                }
             }
-            vp = {nn, kk, mm, kk11, kk19, kk23};
-            map_qp[tt2] = vp;
-        }
-
-        tlog =  nn*log2 + kk*log3 + ll*log5  + mm*log7 + kk11*log11 +
-                kk13*log13 + kk17*log17+ kk19*log19 + kk23*log23 + kk29*log29;
-
-        cnt++;
-        //if (cnt%10==0)
-        {
-            const std::lock_guard<std::mutex> lock(mutex_Tinverse);
-            std::cout << "[p:"<<power<<"]" << "[t=" << t << "] "
-            << " Lim=[" << LIM0 << ","<< LIM << ","<< LIM2 << "] "
-            << "cnt="<< cnt
-            << "[5=" << ll
-            << " 13=" << kk13
-            << " 17=" << kk17
-            << " 29=" << kk29
-            << "] 3=" << kk
-            << " 7=" << mm
-            << " 11=" << kk11
-            << " 19=" << kk19
-            << " 23=" << kk23
-            << " 2=" << nn
-            << " log=" << tlog
-            << " minlog=" << tminlog
-            << " best: "
-            << nmin << " "
-            << kmin << " "
-            << lmin << " "
-            << mmin << " "
-            << k11min << " "
-            << k13min << " "
-            << k17min << " "
-            << k19min << " "
-            << k23min << " "
-            << k29min << " "
-            << std::endl;
-        }
-
-        if (ok)
-            if (tlog > tminlog)
-                break;
-
-        {
-            // if kk(3), mm(7) => tt same if exchange but tlog is lowest if more is on the lowest kk
-            // So kk bucket should be bigger or equal than other 4k+3 primes
-            // Fot tt2, 4k+1 primes ll(5) should be biggest or equal
-
-            // all vs 4k+3/1
-            tt2 = ( (2*ll+1)*(2*kk13+1)*(2*kk17+1)*(2*kk29+1)-1) / 2; //4k+1 = 5, 13 17,
-            tt_beforeN = (2*kk+1)*(2*ll+1)*(2*mm+1)*(2*kk11+1)*(2*kk13+1)*(2*kk17+1)*(2*kk19+1)*(2*kk23+1)*(2*kk29+1);
-            if (nn>0)
-            {
-                tt  = ( ((2*nn-1)*tt_beforeN) - 1 ) / 2;
-            }
-            else
-            {
-                tt  = ( tt_beforeN - 1 ) / 2;
-            }
-
-            if (t == tt + tt2)
-            {
-                mapt2ok[tt2] = true;
-
-                //r = upow(2, nn) * upow(3, kk) * upow(5, ll) * upow(7, mm) * upow(11, kk11) * upow(13, kk13);
-                if ((rmin == -1) || (tlog < tminlog))
-                {
-                    if (t < 10000000)
-                        rmin =  upow(2, nn)    * upow(3, kk)    * upow(5, ll)    * upow(7, mm) *
-                                upow(11, kk11) * upow(13, kk13) * upow(17, kk17) * upow(19, kk19) *
-                                upow(23, kk23) * upow(29, kk29);
-                    else
-                        rmin = 1234567;
-                    if (rmin > 999999999999999) rmin = 1234567;
-
-                    nmin = nn;
-                    kmin = kk;
-                    lmin = ll;
-                    mmin = mm;
-                    k11min = kk11;
-                    k13min = kk13;
-                    k17min = kk17;
-                    k19min = kk19;
-                    k23min = kk23;
-                    k29min = kk29;
-                    tminlog = tlog;
-                    ok = true;
-                    {
-                        const std::lock_guard<std::mutex> lock(mutex_Tinverse);
-                        std::cout
-                            << "[p:"<<power<<"]" << "[t=" << t << "] "
-                            << " Lim=[" << LIM0 << ","<< LIM << ","<< LIM2 << "] "
-                            << "[tt:"<< tt << " tt2:"  << tt2 << "] 2:"
-                            << nn << " 3:"
-                            << kk << " 5:"
-                            << ll << " 7:"
-                            << mm << " 11:"
-                            << kk11<< " 13:"
-                            << kk13 << " 17:"<< kk17 << " "
-                            << kk19 << " 23:"<< kk23 << " 29:"<< kk29  << " r:"
-                            << rmin << " log:" << tlog << std::endl;
-                    }
-                    break;
-                }
-            }
-            else
-            {
-                mapt2ok[tt2] = false;
-            }
-        }
     }}
     }}}
     n = nmin;
@@ -654,9 +698,9 @@ long long Euler827(long FROM, long long N, long long LIM0, long long LIM, long l
     uinteger_t sum = 0;
     long long nn; long long kk; long long ll; long long mm;long long k11;
     long long k13; long long k17; long long k19; long long k23; long long k29;
-    std::cout << "T 15 "<< T(15) << std::endl;
-    std::cout << "T 48 "<< T(48) << std::endl;
-    std::cout << "T 8064000 "<< T(8064000) << std::endl;
+//    std::cout << "T 15 "<< T(15) << std::endl;
+//    std::cout << "T 48 "<< T(48) << std::endl;
+//    std::cout << "T 8064000 "<< T(8064000) << std::endl;
 
     int nt = std::thread::hardware_concurrency();
     std::vector<std::thread> vt;
@@ -5937,22 +5981,36 @@ int main()
 //    n = Euler096(50); to_file("Euler096", n);
 //    std::cout << "Euler096 " << n << std::endl;
 
+    std::map<long long, long long> rm;
+    for (size_t j=0;j<18;j++)
+    {
+        rm = Tinverse(j+1, pow(10, j+1) );
+        for(auto& [a,b] : rm)
+        {
+            //tlog += b * log(a);
+            std::cout << a <<"-"<< b << " ";
+        }
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+    return 0;
+
     bool Euler827_by_segment=true;
-    bool do_sieve = true;
+    bool do_sieve = false;
     if (Euler827_by_segment == false)
     {
-        n = Euler827(1, 9, 0, 100, 0, do_sieve); to_file("Euler827", n);
+        n = Euler827(7, 7, 0, 100, 0, do_sieve); to_file("Euler827", n);
         std::cout << "Euler827 " << n << std::endl;
     }
     else
     {
-        int N = 13;
+        int N = 10;
         int nt = 30;
-        int STEP = 20;
+        int STEP = 10;
         std::vector<std::thread> vt;
         for (int i=0;i<nt;i++)
         {
-            vt.push_back(std::thread(Euler827, N, N, i*STEP, i*STEP+STEP-1, 100, false));
+            vt.push_back(std::thread(Euler827, N, N, i*STEP, i*STEP+STEP-1, 0, false));
         }
         if (do_sieve) vt.push_back( std::thread(fill_bitarray_primes));
         for (size_t j=0;j<vt.size();j++)  vt[j].join();
