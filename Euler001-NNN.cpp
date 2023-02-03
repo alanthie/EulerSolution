@@ -216,17 +216,17 @@ bool TCheck(int power,  long long t, long long nn, long long kk, long long ll, l
 }
 
 //https://www.scribd.com/document/255219409/Albert-H-Beiler-Recreations-in-the-theory-of-numbers-the-queen-of-mathematics-entertains-1966-pdf#
-std::map<long long, long long> Tinverse(int power, long long t)
+std::map<long long, long long> Tinverse(int power, long long t, long double& tminlog)
 {
     std::map<long long, long long> rmap;
     std::map<long long, long long> rbestmap;
     long double tlog;
-    long double tminlog = 99999999999;
+    tminlog = 99999999999;
 
-    std::cout << "power "<< power << " ";std::cout << std::endl;
+    std::cout << "Power "<< power << " ";std::cout << std::endl;
 
     long long T2_2 =  2*(t+1);
-    std::cout << "divisorsof "<< T2_2 << " ";std::cout << std::endl;
+    std::cout << "Divisors of "<< T2_2 << " ";std::cout << std::endl;
     std::vector<long long> v = divisors(T2_2);
 
     long long factor1; long long factor2;
@@ -5981,18 +5981,41 @@ int main()
 //    n = Euler096(50); to_file("Euler096", n);
 //    std::cout << "Euler096 " << n << std::endl;
 
+
     std::map<long long, long long> rm;
+    uinteger_t prodmod = 1;
+    uinteger_t mod = 409120391;
+    uinteger_t sum = 0;
+    long double tminlog;
+    std::stringstream ss;
+
+    ss << std::endl;
     for (size_t j=0;j<18;j++)
     {
-        rm = Tinverse(j+1, pow(10, j+1) );
+        ss  << "power: " << j+1 << " tminlog:" << tminlog << " ";
+        rm = Tinverse(j+1, pow(10, j+1) , tminlog);
+
+        prodmod = 1;
         for(auto& [a,b] : rm)
         {
-            //tlog += b * log(a);
+            //a exp b
             std::cout << a <<"-"<< b << " ";
+            ss << a <<"-"<< b << " ";
+            prodmod *= power_modulo(a, b, mod);
         }
+        prodmod = prodmod % mod;
+        ss << " modulo: "<< prodmod << " ";
+        sum += (prodmod % mod);
+
+        ss << std::endl;
         std::cout << std::endl;
         std::cout << std::endl;
     }
+
+    uinteger_t summod = sum % mod;
+    std::cout << "SUM modulo " << summod << std::endl;
+    ss << "SUM modulo " << summod << std::endl;
+    to_file("Euler827\n", ss.str());
     return 0;
 
     bool Euler827_by_segment=true;
