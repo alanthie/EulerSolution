@@ -5,6 +5,45 @@
 using namespace RationalNS;
 using namespace PRIME;
 
+std::map<long long, long long> Tinverse(int power, long long t, long double& tminlog);
+long long Euler827(long long N=18)
+{
+    std::map<long long, long long> rm;
+    uinteger_t prodmod = 1;
+    uinteger_t mod = 409120391;
+    uinteger_t sum = 0;
+    long double tminlog;
+    std::stringstream ss;
+
+    ss << std::endl;
+    for (size_t j=0;j<N;j++)
+    {
+        ss  << "power: " << j+1 << " tminlog:" << tminlog << " ";
+        rm = Tinverse(j+1, pow(10, j+1) , tminlog);
+
+        prodmod = 1;
+        for(auto& [a,b] : rm)
+        {
+            //a exp b
+            std::cout << a <<"-"<< b << " ";
+            ss << a <<"-"<< b << " ";
+            prodmod *= power_modulo(a, b, mod);
+        }
+        prodmod = prodmod % mod;
+        ss << " modulo: "<< prodmod << " ";
+        sum += (prodmod % mod);
+
+        ss << std::endl;
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+
+    uinteger_t summod = sum % mod;
+    std::cout << "SUM modulo " << summod << std::endl;
+    ss << "SUM modulo " << summod << std::endl;
+    to_file("Euler827\n", ss.str());
+    return (long long)summod;
+}
 
 long long largest_prime_divisor_4kplus1(long long k)
 {
@@ -170,30 +209,6 @@ uinteger_t T(uinteger_t k)
     uinteger_t r = 1;
     return H(k)+L(k);
 }
-//1 Lim=[0,100,0] 4 1 0 0 0 0 0 0 0 0 48 3.8712
-//2 Lim=[0,100,0] 34 1 0 0 0 0 0 0 0 0 399558677 24.6656
-//2 Lim=[0,100,50] 9 5 2 0 0 1 0 0 0 0 40435200 17.5152
-//3 Lim=[0,100,0] 10 2 3 1 0 0 0 0 0 0 8064000 15.9029
-//4 Lim=[0,100,0] 7 3 36 1 0 0 0 0 0 0 236068631 68.0335
-//5 Lim=[0,100,0] 205 81 0 1 0 0 0 0 0 0 166932990 233.029
-//6 Lim=[0,100,0] 9901 0 50 0 0 0 0 0 0 0 404103978 6943.32
-//7 Lim=[0,100,0] 330 44 5 15 0 0 0 0 0 0 20393780 314.313
-//8 Lim=[0,100,0] 1674 18 8 9 2 0 0 0 0 0 167433903 1215.29
-//9 Lim=[0,100,0] 66 51 38 5 3 0 0 2 2 0 76363019 192.019
-
-//1 Lim=300 4 1 0 0 0 0 0 0 0 48 3.8712
-//2 Lim=300 34 1 0 0 0 0 0 0 0 399558677 24.6656
-//3 Lim=300 10 2 3 1 0 0 0 0 0 8064000 15.9029
-//4 Lim=300 7 3 36 1 0 0 0 0 0 236068631 68.0335
-//5 Lim=300 205 81 0 1 0 0 0 0 0 166932990 233.029
-//6 Lim=300 9901 0 50 0 0 0 0 0 0 404103978 6943.32
-//7 Lim=300 330 44 5 15 0 0 0 0 0 20393780 314.313
-//8 Lim=300 1674 18 8 9 2 0 0 0 0 167433903 1215.29
-//9 Lim=100,1 1429 56 3 29 2 0 0 1 0 0 182819963 1121.03
-//10 Lim=300 1855 131 50 14 3 0 0 0 0 272277415 1544.61
-//11 447586 534 5 9 0 0 0 0 0 0 modulo 203849354 minlog=310855
-//12 Lim=[35,41,0] minlog=1.66582e+08 best: 240326845 9 36 1 0 0 0 0 0 0
-//13 Lim=[0,6,0]   minlog=5.51897e+07 best: 79617201 2990 0 3 1 0 0 0 0 0
 
 std::mutex mutex_Tinverse;
 bool TCheck(int power,  long long t, long long nn, long long kk, long long ll, long long mm, long long kk11,
@@ -5981,63 +5996,9 @@ int main()
 //    n = Euler096(50); to_file("Euler096", n);
 //    std::cout << "Euler096 " << n << std::endl;
 
+    n = Euler827(18); to_file("Euler827", n);
+    std::cout << "Euler827 " << n << std::endl;
 
-    std::map<long long, long long> rm;
-    uinteger_t prodmod = 1;
-    uinteger_t mod = 409120391;
-    uinteger_t sum = 0;
-    long double tminlog;
-    std::stringstream ss;
-
-    ss << std::endl;
-    for (size_t j=0;j<18;j++)
-    {
-        ss  << "power: " << j+1 << " tminlog:" << tminlog << " ";
-        rm = Tinverse(j+1, pow(10, j+1) , tminlog);
-
-        prodmod = 1;
-        for(auto& [a,b] : rm)
-        {
-            //a exp b
-            std::cout << a <<"-"<< b << " ";
-            ss << a <<"-"<< b << " ";
-            prodmod *= power_modulo(a, b, mod);
-        }
-        prodmod = prodmod % mod;
-        ss << " modulo: "<< prodmod << " ";
-        sum += (prodmod % mod);
-
-        ss << std::endl;
-        std::cout << std::endl;
-        std::cout << std::endl;
-    }
-
-    uinteger_t summod = sum % mod;
-    std::cout << "SUM modulo " << summod << std::endl;
-    ss << "SUM modulo " << summod << std::endl;
-    to_file("Euler827\n", ss.str());
-    return 0;
-
-    bool Euler827_by_segment=true;
-    bool do_sieve = false;
-    if (Euler827_by_segment == false)
-    {
-        n = Euler827(7, 7, 0, 100, 0, do_sieve); to_file("Euler827", n);
-        std::cout << "Euler827 " << n << std::endl;
-    }
-    else
-    {
-        int N = 10;
-        int nt = 30;
-        int STEP = 10;
-        std::vector<std::thread> vt;
-        for (int i=0;i<nt;i++)
-        {
-            vt.push_back(std::thread(Euler827, N, N, i*STEP, i*STEP+STEP-1, 0, false));
-        }
-        if (do_sieve) vt.push_back( std::thread(fill_bitarray_primes));
-        for (size_t j=0;j<vt.size();j++)  vt[j].join();
-    }
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
