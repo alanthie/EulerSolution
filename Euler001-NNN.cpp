@@ -12,14 +12,14 @@ long long Euler827(long long N=18)
     uinteger_t prodmod = 1;
     uinteger_t mod = 409120391;
     uinteger_t sum = 0;
-    long double tminlog;
+    long double tminlog = 0;
     std::stringstream ss;
 
     ss << std::endl;
-    for (size_t j=0;j<N;j++)
+    for (long long j=0;j<N;j++)
     {
         ss  << "power: " << j+1 << " tminlog:" << tminlog << " ";
-        rm = Tinverse(j+1, pow(10, j+1) , tminlog);
+        rm = Tinverse((int) j+1, (long long) pow(10, j+1) , tminlog);
 
         prodmod = 1;
         for(auto& [a,b] : rm)
@@ -393,7 +393,6 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
     bool ok = false;
     long double tlog;
     long double tminlog = 99999999999;
-    long long nn_limit;
 
     long long tt;
     long long tt_beforeN;
