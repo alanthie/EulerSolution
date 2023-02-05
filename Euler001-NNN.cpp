@@ -1331,7 +1331,7 @@ long long Euler828_generate_numbers(std::vector<int> vnum, int target)
 long long Euler828()
 {
     // TEST
-    std::this_thread::sleep_for (std::chrono::seconds(5));
+//    std::this_thread::sleep_for (std::chrono::seconds(5));
 //    {
 //        std::vector<int> v = {2,3,4,6,7,25};
 //        std::cout << Euler828_generate_numbers(v, 211) << std::endl;
@@ -1343,7 +1343,13 @@ long long Euler828()
     // READ...
     int num[200 * 7];
     int cnt=0;
+
+#ifdef _WIN32
+    std::ifstream is("./../Data/p828_number_challenges.txt", std::ifstream::binary);
+#else
     std::ifstream is("./../Data/p828_number_challenges.txt", std::ifstream::in);
+#endif
+
     if (is)
     {
         // get length of file:
@@ -1365,7 +1371,7 @@ long long Euler828()
                 {
                     if (s.size()>0)
                     {
-                        num[cnt] = to_long(s);
+                        num[cnt] = (int)to_long(s);
                         cnt++;
                         s.clear();
                     }
@@ -1377,11 +1383,12 @@ long long Euler828()
             }
             if (s.size()>0)
             {
-                num[cnt] = to_long(s);
+                num[cnt] = (int)to_long(s);
             }
         }
         else
         {
+            std::cout << "error: only " << is.gcount() << " could be read of " << length << std::endl;
             std::cout << "BAD FILE" << std::endl;
             return 0;
         }
