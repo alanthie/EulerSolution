@@ -1209,7 +1209,7 @@ int Euler828_sum(std::vector<int> v, int n)
     return sum;
 }
 
-long long Euler828_generate_numbers(std::vector<int> vnum, int target)
+long long Euler828_generate_numbers(std::vector<int> vnum, int target, long long& res_sum, bool out=false)
 {
     bool ok;
     long long tsum;
@@ -1325,22 +1325,19 @@ long long Euler828_generate_numbers(std::vector<int> vnum, int target)
     }
 
     if (minsum == -1) minsum=0;
+    res_sum = minsum;
+
+    if (out)
+    {
+        const std::lock_guard<std::mutex> lock(mutex_output);
+        std::cout << target << ": " << minsum << std::endl;
+    }
     return minsum;
 }
 
 long long Euler828()
 {
-    // TEST
-//    std::this_thread::sleep_for (std::chrono::seconds(5));
-//    {
-//        std::vector<int> v = {2,3,4,6,7,25};
-//        std::cout << Euler828_generate_numbers(v, 211) << std::endl;
-//
-//        v = {1,3,6,9,50,75};
-//        std::cout << Euler828_generate_numbers(v, 197) << std::endl;
-//    }
-
-    // READ...
+    // READ
     int num[200 * 7];
     int cnt=0;
 
@@ -1402,15 +1399,18 @@ long long Euler828()
     uinteger_t prodmod = 1;
     uinteger_t umod = 1005075251;
 
+    std::vector<std::thread> vt;
     for (int i = 1; i <= 200; i++)
     {
         v.clear();
         target = num[(i-1)*7];
         for (int j = 0; j < 6; j++) v.push_back( num[(i-1)*7 + j + 1] );
 
-        vsum[i-1] = Euler828_generate_numbers(v, target);
-        std::cout << i << " " << vsum[i-1] << std::endl;
+        // Multithread
+        vt.push_back(std::thread(Euler828_generate_numbers, v, target, std::ref(vsum[i-1]), false) );
     }
+    for (size_t j=0;j<vt.size();j++)  vt[j].join();
+
 
     for (int i = 1; i <= 200; i++)
     {
