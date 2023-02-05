@@ -1166,9 +1166,9 @@ int Euler828_op(int ioper, int a, int b)
         case 0:return a + b;
         case 1:return a - b;
         case 2:return a * b;
-        case 3:return (b != 0 && a % b == 0) ? a / b: INT32_MIN;
+        case 3:return (b != 0 && a % b == 0) ? a / b: std::numeric_limits<int>::min();
     }
-    return INT32_MIN;
+    return std::numeric_limits<int>::min();
 }
 
 bool Euler828_match_target(std::vector<int> vnum, int n, int target)
@@ -1192,7 +1192,7 @@ bool Euler828_match_target(std::vector<int> vnum, int n, int target)
             for (int iop = 0; iop < 4; iop++)
             {
                 vnewnum[0] = Euler828_op(iop, vnum[i], vnum[j]);
-                if (vnewnum[0] == INT32_MIN) continue;
+                if (vnewnum[0] == std::numeric_limits<int>::min()) continue;
 
                 if (Euler828_match_target(vnewnum, n - 1, target))
                     return true;
