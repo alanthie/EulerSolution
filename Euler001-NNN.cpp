@@ -14,14 +14,14 @@ long long Euler827(long long N=18)
     uinteger_t prodmod = 1;
     uinteger_t mod = 409120391;
     uinteger_t sum = 0;
-    long double tminlog;
+    long double tminlog = 0;
     std::stringstream ss;
 
     ss << std::endl;
     for (size_t j=0;j<(size_t)N;j++)
     {
         ss  << "power: " << j+1 << " tminlog:" << tminlog << " ";
-        rm = Tinverse(j+1, pow(10, j+1) , tminlog);
+        rm = Tinverse((int) j+1, (long long) pow(10, j+1) , tminlog);
 
         prodmod = 1;
         for(auto& [a,b] : rm)
@@ -2031,7 +2031,7 @@ public:
             for (int y = 0; y < 80; y++)
                 distance[i][y] = 999999;
 
-        // Bellman–Ford algorithm
+        // Bellmanï¿½Ford algorithm
         distance[0][0] = GRID[0][0];
         for (int i = 0; i < w * h; i++)
         {
@@ -2631,7 +2631,7 @@ long long Euler076(long long N)
 long long Euler075(long long N)
 {
     //161667
-    //Need Euclid's formula: x²+y²=(2mn)²+(m²-n²)²=(m²+n²)²=z². L=2mn+m2-n2+m2+n2 = 2 * m * (m + n)
+    //Need Euclid's formula: xï¿½+yï¿½=(2mn)ï¿½+(mï¿½-nï¿½)ï¿½=(mï¿½+nï¿½)ï¿½=zï¿½. L=2mn+m2-n2+m2+n2 = 2 * m * (m + n)
     int MAXL = (int)(N+1);
     char* list = new char[MAXL];
     for (int m = 0; m < MAXL; m++) list[m] = 0;
