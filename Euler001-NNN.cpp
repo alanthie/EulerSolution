@@ -1159,33 +1159,25 @@ long long Euler093(long long N)
     return 1000*vmax[0]+100*vmax[1]+10*vmax[2]+vmax[3];
 }
 
-// a (op) b
-int op(int nr_op, int a, int b)
+int Euler828_op(int ioper, int a, int b)
 {
-    switch (nr_op)
+    switch (ioper)
     {
-        case 0:  // plus
-            return a + b;
-        case 1:  // minus
-            return a - b;
-        case 2:  // times
-            return a * b;
-        case 3:  // division
-            return (b != 0 && a % b == 0) ? a / b: INT32_MIN;  // result or error
+        case 0:return a + b;
+        case 1:return a - b;
+        case 2:return a * b;
+        case 3:return (b != 0 && a % b == 0) ? a / b: INT32_MIN;
     }
-    return  0;
+    return INT32_MIN;
 }
 
-bool do_n_number_match_target(int vnum[10], int n, int target)
+bool Euler828_match_target(std::vector<int> vnum, int n, int target)
 {
-    int vnewnum[10];
     if (n < 1) return false;
-    if (n == 1)
-    {
-        return vnum[0] == target;
-    }
+    if (n == 1) return vnum[0] == target;
 
     // Recursion: Replace all (i, j with i operation j) then search n-1
+    std::vector<int> vnewnum(n-1,0);
     for (int i = 0; i < n; i++)
     {
         for (int j = 0; j < n; j++)
@@ -1197,64 +1189,156 @@ bool do_n_number_match_target(int vnum[10], int n, int target)
                 if (k != i && k != j) vnewnum[idx++] = vnum[k];
             }
 
-            for (int nrop = 0; nrop < 4; nrop++)
+            for (int iop = 0; iop < 4; iop++)
             {
-                vnewnum[0] = op(nrop, vnum[i], vnum[j]);
+                vnewnum[0] = Euler828_op(iop, vnum[i], vnum[j]);
                 if (vnewnum[0] == INT32_MIN) continue;
 
-                if (do_n_number_match_target(vnewnum, n - 1, target))
+                if (Euler828_match_target(vnewnum, n - 1, target))
                     return true;
             }
         }
     }
-
     return false;
 }
 
-// sum of a list of numbers
-int sum(int v[6], int n)
+int Euler828_sum(std::vector<int> v, int n)
 {
-    int res = 0;
-    for (int i = 0; i < n; i++) res += v[i];
-    return res;
+    int sum = 0;
+    for (int i = 0; i < n; i++) sum += v[i];
+    return sum;
 }
 
-// finds minimum possible score of solution (or INT32_MAX if none)
-int rec2(int nums[6], int v[6], int n, int k, int target)
+long long Euler828_generate_numbers(std::vector<int> vnum, int target)
 {
-    if (do_n_number_match_target(v, n, target))
-        return sum(v, n);
+    bool ok;
+    long long tsum;
+    long long minsum = -1;
 
-    if (k == 6) return INT32_MAX;
-
-    int val1 = rec2(nums, v, n, k + 1, target);
-
-    v[n] = nums[k];
-    int val2 = rec2(nums, v, n + 1, k + 1, target);
-
-    return std::min(val1, val2);
-}
-
-// From web
-long long Euler828_Faster()
-{
-    int64_t result = 0;
-    int64_t pow3 = 1;
-    const int64_t mod = 1005075251;
-
+    // 2
+    for (int i = 0; i < 6; i++)
+    for (int j = i+1; j < 6; j++)
     {
-        // true
-        int vnum6[10] = {2,3,4,6,7,25, 0, 0, 0, 0};
-        std::cout << do_n_number_match_target(vnum6, 6, 211) << std::endl;
-
-        // false
-        int vnum5a[10] = {2,3,4,6,7,  0, 0, 0, 0, 0};
-        std::cout << do_n_number_match_target(vnum5a, 5, 211) << std::endl;
-
-        // true
-        int vnum5b[10] = {2,3,4,6,25, 0, 0, 0, 0, 0};
-        std::cout << do_n_number_match_target(vnum5b, 5, 211) << std::endl;
+        if (i!=j)
+        {
+            std::vector<int> vnumbers(2,0);
+            vnumbers[0] = vnum[i];
+            vnumbers[1] = vnum[j];
+            ok = Euler828_match_target(vnumbers, 2, target);
+            if (ok)
+            {
+                tsum = Euler828_sum(vnumbers, 2);
+                if (minsum == -1) minsum = tsum;
+                else if (tsum < minsum) minsum=tsum;
+            }
+        }
     }
+
+    // 3
+    for (int i = 0; i < 6; i++)
+    for (int j = i+1; j < 6; j++)
+    for (int k = j+1; k < 6; k++)
+    {
+        if ((i!=j)&&(i!=k)&&(j!=k))
+        {
+            std::vector<int> vnumbers(3,0);
+            vnumbers[0] = vnum[i];
+            vnumbers[1] = vnum[j];
+            vnumbers[2] = vnum[k];
+            ok = Euler828_match_target(vnumbers, 3, target);
+            if (ok)
+            {
+                tsum = Euler828_sum(vnumbers, 3);
+                if (minsum == -1) minsum=tsum;
+                else if (tsum < minsum) minsum=tsum;
+            }
+        }
+    }
+
+    // 4
+    for (int i = 0; i < 6; i++)
+    for (int j = i+1; j < 6; j++)
+    for (int k = j+1; k < 6; k++)
+    for (int l = k+1; l < 6; l++)
+    {
+        if ((i!=j)&&(i!=k)&&(i!=l) &&(j!=k)&&(j!=l) &&(k!=l) )
+        {
+            std::vector<int> vnumbers(4,0);
+            vnumbers[0] = vnum[i];
+            vnumbers[1] = vnum[j];
+            vnumbers[2] = vnum[k];
+            vnumbers[3] = vnum[l];
+            ok = Euler828_match_target(vnumbers, 4, target);
+            if (ok)
+            {
+                tsum = Euler828_sum(vnumbers, 4);
+                if (minsum == -1)
+                    minsum=tsum;
+                else if (tsum < minsum)
+                    minsum=tsum;
+            }
+        }
+    }
+
+    // 5
+    for (int i = 0; i < 6; i++)
+    for (int j = i+1; j < 6; j++)
+    for (int k = j+1; k < 6; k++)
+    for (int l = k+1; l < 6; l++)
+    for (int m = l+1; m < 6; m++)
+    {
+        if ((i!=j)&&(i!=k)&&(i!=l)&&(i!=m)   &&(j!=k)&&(j!=l)&&(j!=m) &&(k!=l)&&(k!=m) &&(l!=m))
+        {
+            std::vector<int> vnumbers(5,0);
+            vnumbers[0] = vnum[i];
+            vnumbers[1] = vnum[j];
+            vnumbers[2] = vnum[k];
+            vnumbers[3] = vnum[l];
+            vnumbers[4] = vnum[m];
+            ok = Euler828_match_target(vnumbers, 5, target);
+            if (ok)
+            {
+                tsum = Euler828_sum(vnumbers, 5);
+                if (minsum == -1)
+                    minsum=tsum;
+                else if (tsum < minsum)
+                    minsum=tsum;
+            }
+        }
+    }
+
+    // 6
+    std::vector<int> vnumbers(6,0);
+    vnumbers[0] = vnum[0];
+    vnumbers[1] = vnum[1];
+    vnumbers[2] = vnum[2];
+    vnumbers[3] = vnum[3];
+    vnumbers[4] = vnum[4];
+    vnumbers[5] = vnum[5];
+    ok = Euler828_match_target(vnumbers, 6, target);
+    if (ok)
+    {
+        tsum = Euler828_sum(vnumbers, 6);
+        if (minsum == -1) minsum=tsum;
+        else if (tsum < minsum)
+            minsum=tsum;
+    }
+
+    if (minsum == -1) minsum=0;
+    return minsum;
+}
+
+long long Euler828()
+{
+    // TEST
+    std::this_thread::sleep_for (std::chrono::seconds(5));
+//    {
+//        std::vector<int> v = {2,3,4,6,7,25};
+//        std::cout << Euler828_generate_numbers(v, 211) << std::endl;
+//
+//        v = {1,3,6,9,50,75};
+//        std::cout << Euler828_generate_numbers(v, 197) << std::endl;
+//    }
 
     // READ...
     int num[200 * 7];
@@ -1304,24 +1388,35 @@ long long Euler828_Faster()
         is.close();
     }
 
+    std::vector<long long> vsum(200, 0);
+    std::vector<int> v;
+    int target;
+    uinteger_t totsummod = 0;
+    uinteger_t prodmod = 1;
+    uinteger_t umod = 1005075251;
+
     for (int i = 1; i <= 200; i++)
     {
-        pow3 *= 3;
-        pow3 %= mod;
-
-        int target, numbers[6], v[6];
+        v.clear();
         target = num[(i-1)*7];
-        for (int j = 0; j < 6; j++) numbers[j] = num[(i-1)*7 + j + 1];
+        for (int j = 0; j < 6; j++) v.push_back( num[(i-1)*7 + j + 1] );
 
-        int s = rec2(numbers, v, 0, 0, target);
-        if (s != INT32_MAX)
+        vsum[i-1] = Euler828_generate_numbers(v, target);
+        std::cout << i << " " << vsum[i-1] << std::endl;
+    }
+
+    for (int i = 1; i <= 200; i++)
+    {
+        if (vsum[i-1] != 0)
         {
-            result += (pow3 * rec2(numbers, v, 0, 0, target)) % mod;
-            result %= mod;
+            prodmod = power_modulo(3, i, umod) * (vsum[i-1] % umod);
+            prodmod = prodmod % umod;
+            totsummod += prodmod;
         }
     }
-    std::cout << result << std::endl;;
-    return result;
+    totsummod = totsummod % umod;
+    std::cout << totsummod << std::endl;
+    return (long long)totsummod;
 }
 
 
@@ -6169,8 +6264,8 @@ int main()
 //    n = Euler827(18); to_file("Euler827", n);
 //    std::cout << "Euler827 " << n << std::endl;
 
-    n = Euler828_Faster(); to_file("Euler828_Faster", n);
-    std::cout << "Euler828_Faster " << n << std::endl;
+    n = Euler828(); to_file("Euler828", n);
+    std::cout << "Euler828 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
