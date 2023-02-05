@@ -5,6 +5,8 @@
 using namespace RationalNS;
 using namespace PRIME;
 
+std::mutex mutex_output;
+
 std::map<long long, long long> Tinverse(int power, long long t, long double& tminlog);
 long long Euler827(long long N=18)
 {
@@ -16,7 +18,7 @@ long long Euler827(long long N=18)
     std::stringstream ss;
 
     ss << std::endl;
-    for (size_t j=0;j<N;j++)
+    for (size_t j=0;j<(size_t)N;j++)
     {
         ss  << "power: " << j+1 << " tminlog:" << tminlog << " ";
         rm = Tinverse(j+1, pow(10, j+1) , tminlog);
@@ -70,6 +72,7 @@ long long largest_prime_divisor_4kplus1(long long k)
 }
 std::map<uinteger_t, long long> unique_prime_factors_4k1(uinteger_t k, long long lim)
 {
+    lim = lim;
     std::map<uinteger_t, long long> vmap;
     uinteger_t t = k;
     for (uinteger_t i = 2; i <= t; i++)
@@ -92,6 +95,7 @@ std::map<uinteger_t, long long> unique_prime_factors_4k1(uinteger_t k, long long
 }
 std::map<uinteger_t, long long> unique_prime_factors_4k3(uinteger_t k, long long lim)
 {
+    lim = lim;
     std::map<uinteger_t, long long> vmap;
     uinteger_t t = k;
     for (uinteger_t i = 2; i <= t; i++)
@@ -214,6 +218,7 @@ std::mutex mutex_Tinverse;
 bool TCheck(int power,  long long t, long long nn, long long kk, long long ll, long long mm, long long kk11,
                         long long kk13,long long kk17,long long kk19,long long kk23,long long kk29)
 {
+    power = power;
     long long tt = 0;
     long long tt2 = ( (2*ll+1)*(2*kk13+1)*(2*kk17+1)*(2*kk29+1)-1) / 2; //4k+1 = 5, 13 17, 29
     long long tt_beforeN = (2*kk+1)*(2*ll+1)*(2*mm+1)*(2*kk11+1)*(2*kk13+1)*(2*kk17+1)*(2*kk19+1)*(2*kk23+1)*(2*kk29+1);
@@ -393,14 +398,12 @@ uinteger_t Tinverse(int power, long long t, long long& n, long long& k, long lon
     bool ok = false;
     long double tlog;
     long double tminlog = 99999999999;
-    long long nn_limit;
 
     long long tt;
     long long tt_beforeN;
     long long tt2;
 
     uinteger_t maxprime;
-    long cntp = 0;
 
     // CACHE
     std::map<long long, std::vector<uinteger_t>> mapcache;
@@ -1047,7 +1050,7 @@ long long do_bin_oper(long long a,long long b,long long c,long long d, std::vect
         else return -1;
     }
 
-    i = 2;
+    i = 2;  //skip
     if      (vop[i]==0) r2 = r2 + vn[next2];
     else if (vop[i]==1) r2 = r2- vn[next2];
     else if (vop[i]==2) r2 = r2 * vn[next2];
@@ -1072,6 +1075,7 @@ long long do_bin_oper(long long a,long long b,long long c,long long d, std::vect
 
     return r.getM().toLongLong();
 }
+
 
 long long Euler093(long long N)
 {
@@ -1153,6 +1157,171 @@ long long Euler093(long long N)
     }
 
     return 1000*vmax[0]+100*vmax[1]+10*vmax[2]+vmax[3];
+}
+
+// a (op) b
+int op(int nr_op, int a, int b)
+{
+    switch (nr_op)
+    {
+        case 0:  // plus
+            return a + b;
+        case 1:  // minus
+            return a - b;
+        case 2:  // times
+            return a * b;
+        case 3:  // division
+            return (b != 0 && a % b == 0) ? a / b: INT32_MIN;  // result or error
+    }
+    return  0;
+}
+
+bool do_n_number_match_target(int vnum[10], int n, int target)
+{
+    int vnewnum[10];
+    if (n < 1) return false;
+    if (n == 1)
+    {
+        return vnum[0] == target;
+    }
+
+    // Recursion: Replace all (i, j with i operation j) then search n-1
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            if (i == j) continue;
+            int idx=1;
+            for (int k = 0; k < n; k++)
+            {
+                if (k != i && k != j) vnewnum[idx++] = vnum[k];
+            }
+
+            for (int nrop = 0; nrop < 4; nrop++)
+            {
+                vnewnum[0] = op(nrop, vnum[i], vnum[j]);
+                if (vnewnum[0] == INT32_MIN) continue;
+
+                if (do_n_number_match_target(vnewnum, n - 1, target))
+                    return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// sum of a list of numbers
+int sum(int v[6], int n)
+{
+    int res = 0;
+    for (int i = 0; i < n; i++) res += v[i];
+    return res;
+}
+
+// finds minimum possible score of solution (or INT32_MAX if none)
+int rec2(int nums[6], int v[6], int n, int k, int target)
+{
+    if (do_n_number_match_target(v, n, target))
+        return sum(v, n);
+
+    if (k == 6) return INT32_MAX;
+
+    int val1 = rec2(nums, v, n, k + 1, target);
+
+    v[n] = nums[k];
+    int val2 = rec2(nums, v, n + 1, k + 1, target);
+
+    return std::min(val1, val2);
+}
+
+// From web
+long long Euler828_Faster()
+{
+    int64_t result = 0;
+    int64_t pow3 = 1;
+    const int64_t mod = 1005075251;
+
+    {
+        // true
+        int vnum6[10] = {2,3,4,6,7,25, 0, 0, 0, 0};
+        std::cout << do_n_number_match_target(vnum6, 6, 211) << std::endl;
+
+        // false
+        int vnum5a[10] = {2,3,4,6,7,  0, 0, 0, 0, 0};
+        std::cout << do_n_number_match_target(vnum5a, 5, 211) << std::endl;
+
+        // true
+        int vnum5b[10] = {2,3,4,6,25, 0, 0, 0, 0, 0};
+        std::cout << do_n_number_match_target(vnum5b, 5, 211) << std::endl;
+    }
+
+    // READ...
+    int num[200 * 7];
+    int cnt=0;
+    std::ifstream is("./../Data/p828_number_challenges.txt", std::ifstream::in);
+    if (is)
+    {
+        // get length of file:
+        is.seekg(0, is.end);
+        int length = (int)is.tellg();
+        is.seekg(0, is.beg);
+
+        std::string s;
+        char* buffer = new char[length];
+
+        is.read(buffer, length);
+        if (is)
+        {
+            int pos = 0;
+
+            while(true)
+            {
+                if ((buffer[pos]==',') || (buffer[pos]=='\n') || (buffer[pos]==':') )
+                {
+                    if (s.size()>0)
+                    {
+                        num[cnt] = to_long(s);
+                        cnt++;
+                        s.clear();
+                    }
+                }
+                else if (buffer[pos]!=',')  s=s+buffer[pos];
+
+                pos += 1;
+                if (pos >= length) break;
+            }
+            if (s.size()>0)
+            {
+                num[cnt] = to_long(s);
+            }
+        }
+        else
+        {
+            std::cout << "BAD FILE" << std::endl;
+            return 0;
+        }
+        is.close();
+    }
+
+    for (int i = 1; i <= 200; i++)
+    {
+        pow3 *= 3;
+        pow3 %= mod;
+
+        int target, numbers[6], v[6];
+        target = num[(i-1)*7];
+        for (int j = 0; j < 6; j++) numbers[j] = num[(i-1)*7 + j + 1];
+
+        int s = rec2(numbers, v, 0, 0, target);
+        if (s != INT32_MAX)
+        {
+            result += (pow3 * rec2(numbers, v, 0, 0, target)) % mod;
+            result %= mod;
+        }
+    }
+    std::cout << result << std::endl;;
+    return result;
 }
 
 
@@ -1435,7 +1604,8 @@ public:
         {
             while (!feof(fp))
             {
-                fscanf(fp, "%s", str);
+                auto r = fscanf(fp, "%s", str);
+                if (r==0) {}
                 counter = (int)strlen(str);
                 str[counter] = '\0';
                 //printf("%s\n",str);
@@ -1694,7 +1864,7 @@ public:
     constexpr static long long fiftyMillion = 50000001;
     constexpr static long long sz = 10001;
     constexpr static long long mx = 101;
-    bool p[sz];
+    bool p[sz+1];
     bool* ans = nullptr;// [fiftyMillion + 2] ;
     long long primeTable[1230]; long long  ind = 0;
 
@@ -1708,7 +1878,7 @@ public:
         long i, j;
 
         for (i = 0; i < fiftyMillion + 2; i++) ans[i] = false;
-        for (i = 0; i < sz; i++) p[i] = false;
+        for (i = 0; i <= sz; i++) p[i] = false;
         for (i = 4; i < sz; i += 2)
             p[i] = true;
 
@@ -5996,9 +6166,11 @@ int main()
 //    n = Euler096(50); to_file("Euler096", n);
 //    std::cout << "Euler096 " << n << std::endl;
 
-    n = Euler827(18); to_file("Euler827", n);
-    std::cout << "Euler827 " << n << std::endl;
+//    n = Euler827(18); to_file("Euler827", n);
+//    std::cout << "Euler827 " << n << std::endl;
 
+    n = Euler828_Faster(); to_file("Euler828_Faster", n);
+    std::cout << "Euler828_Faster " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
