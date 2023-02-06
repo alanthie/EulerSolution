@@ -7,6 +7,23 @@ using namespace PRIME;
 
 std::mutex mutex_output;
 
+
+long long Euler097()
+{
+    uinteger_t summod = 0;
+    uinteger_t mod = 10000000000;
+    uinteger_t m(28433);
+    uinteger_t prodmod = 1;
+
+    prodmod *= power_modulo(2, 7830457, mod) * m%mod;
+    prodmod = prodmod %mod;
+
+    summod += prodmod + (1%mod);
+    summod = summod %mod;
+    return (long long)summod;
+}
+
+
 std::map<long long, long long> Tinverse(int power, long long t, long double& tminlog);
 long long Euler827(long long N=18)
 {
@@ -6273,6 +6290,9 @@ int main()
 
     n = Euler828(); to_file("Euler828", n);
     std::cout << "Euler828 " << n << std::endl;
+
+    n = Euler097(); to_file("Euler097", n);
+    std::cout << "Euler097 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
