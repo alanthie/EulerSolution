@@ -7,6 +7,415 @@ using namespace PRIME;
 
 std::mutex mutex_output;
 
+class p100
+{
+// see https://euler.stephan-brumme.com/100/
+public:
+    int solve()
+    {
+      unsigned int tests = 1;
+      //std::cin >> tests;
+
+      while (tests--)
+      {
+        unsigned long long minimum = 1000000000000ULL;
+
+        unsigned long long p = 1;
+        unsigned long long q = 2;
+       // std::cin >> p >> q >> minimum;
+
+        unsigned long long blue = 0;
+        unsigned long long red  = 0;
+
+        // special code for p/q = 1/2
+        if (p == 1 && q == 2)
+        {
+          blue = 15;
+          red  =  6;
+
+          // keep going until limit is reached
+          while (blue + red < minimum)
+          {
+            // at first I brute-forced the first solutions and wrote them down
+            // then I saw the following relationship for p/q = 1/2:
+            //  red(i+1) = 2 * blue(i) + red(i) - 1;
+            // blue(i+1) = 2 * red(i+1)
+            red   = 2 * blue + red - 1; // seems to be true for most p/q
+            blue += 2 * red;            // but this line is not correct for p/q != 1/2
+          }
+          std::cout << blue << std::endl;
+          continue;
+        }
+
+        // brute-force smallest solution
+        bool found = false;
+        for (blue = 2; blue < 100000; blue++)
+        {
+          // sum = red + blue
+          // blue * (blue - 1) / (sum * (sum - 1)) = p / q
+          // blue * (blue - 1) * q / p = sum * (sum - 1)
+          unsigned long long b2 = blue * (blue - 1);
+          b2 *= q;
+          // right side must be an integer
+          if (b2 % p != 0)
+            continue;
+          unsigned long long sum2 = b2 / p; // sum2 = sum * (sum - 1)
+
+          // (sum-1)^2 < sum2 < sum^2
+          unsigned long long sum  = std::sqrt(sum2) + 1;
+          // sqrt may have returned a floating-point number
+          if (sum * (sum - 1) != sum2)
+            continue;
+
+          // now we have the correct solution if minimum is small (< 100000)
+          red = sum - blue;
+          if (blue + red >= minimum)
+          {
+            found = true;
+            break;
+          }
+        }
+
+        // failed ? TODO: this means just that my simple search aborted
+        if (!found)
+        {
+          std::cout << "No solution" << std::endl;
+          continue;
+        }
+
+        // show solution
+        std::cout << blue << " " << (red + blue) << std::endl;
+        return blue;
+      }
+
+      return 0;
+    }
+};
+
+class p099
+{
+//709
+public:
+    int read(std::vector<long long>& vs)
+    {
+        // READ
+        // 519432,525806
+        int cnt=0;
+
+#ifdef _WIN32
+    std::ifstream is("./../Data/p099_base_exp.txt", std::ifstream::binary);
+#else
+    std::ifstream is("./../Data/p099_base_exp.txt", std::ifstream::in);
+#endif
+
+        if (is)
+        {
+            // get length of file:
+            is.seekg(0, is.end);
+            int length = (int)is.tellg();
+            is.seekg(0, is.beg);
+
+            std::string s;
+            char* buffer = new char[length];
+
+            is.read(buffer, length);
+            if (is)
+            {
+                int pos = 0;
+                while(true)
+                {
+                    if ((buffer[pos]==',') || (buffer[pos]=='\n') )
+                    {
+                        if (s.size()>0)
+                        {
+                            vs.push_back(to_long(s));
+                            cnt++;
+                            s.clear();
+                        }
+                    }
+                    else //if (buffer[pos]!='"')
+                        s=s+buffer[pos];
+
+                    pos += 1;
+                    if (pos >= length) break;
+                }
+                if (s.size()>0)
+                {
+                    vs.push_back(to_long(s));
+                    cnt++;
+                }
+            }
+            else
+            {
+                std::cout << "error: only " << is.gcount() << " could be read of " << length << std::endl;
+                std::cout << "BAD FILE" << std::endl;
+                return 0;
+            }
+            is.close();
+        }
+        else
+        {
+            std::cout << "FILE not found" << std::endl;
+            return 0;
+        }
+        return cnt;
+    }
+
+    int solve()
+    {
+
+      std::map<double, unsigned int> data;
+      std::vector<long long> vn;
+      int n = read(vn);
+      std::cout << "read " << n << " numbers" << std::endl;
+
+      for (unsigned int i = 1; i <= 1000; i++)
+      {
+        unsigned int base, exponent;
+        base = vn[2*i-2];
+        exponent = vn[2*i-1];
+        data[exponent * log(base)] = i;
+      }
+      std::cout << data.rbegin()->second << std::endl;
+      return data.rbegin()->second ;
+    }
+};
+
+class p098
+{
+// see https://euler.stephan-brumme.com/98/
+public:
+
+    int read(std::vector<std::string>& vs)
+    {
+        // READ
+        int cnt=0;
+
+#ifdef _WIN32
+    std::ifstream is("./../Data/p098_words.txt", std::ifstream::binary);
+#else
+    std::ifstream is("./../Data/p098_words.txt", std::ifstream::in);
+#endif
+
+        if (is)
+        {
+            // get length of file:
+            is.seekg(0, is.end);
+            int length = (int)is.tellg();
+            is.seekg(0, is.beg);
+
+            std::string s;
+            char* buffer = new char[length];
+
+            is.read(buffer, length);
+            if (is)
+            {
+                int pos = 0;
+
+                while(true)
+                {
+                    if ((buffer[pos]==',') || (buffer[pos]=='\n') || (buffer[pos]=='"') )
+                    {
+                        if (s.size()>0)
+                        {
+                            vs.push_back(s);
+                            cnt++;
+                            s.clear();
+                        }
+                    }
+                    else if (buffer[pos]!='"')  s=s+buffer[pos];
+
+                    pos += 1;
+                    if (pos >= length) break;
+                }
+                if (s.size()>0)
+                {
+                    vs.push_back(s);
+                    cnt++;
+                }
+            }
+            else
+            {
+                std::cout << "error: only " << is.gcount() << " could be read of " << length << std::endl;
+                std::cout << "BAD FILE" << std::endl;
+                return 0;
+            }
+            is.close();
+        }
+        else
+        {
+            std::cout << "FILE not found" << std::endl;
+        }
+        return cnt;
+    }
+
+    // count digits, two numbers have the same fingerprint if they are permutations of each other
+    unsigned long long fingerprint(unsigned long long x)
+    {
+      unsigned long long result = 0;
+      while (x > 0)
+      {
+        auto digit = x % 10;
+        x /= 10;
+
+        result += 1LL << (4 * digit);
+      }
+      return result;
+    }
+
+    // return biggest square if both a and b can be mapped to anagram squares, else return 0
+    unsigned long long match(const std::string& a, const std::string& b, const std::vector<unsigned long long>& squares)
+    {
+      unsigned long long result = 0;
+      // try all combinations
+      for (auto i : squares)
+        for (auto j : squares)
+        {
+          // don't match a word with itself
+          if (i == j)
+            continue;
+
+          // convert squares to strings
+          auto replaceA = std::to_string(i);
+          auto replaceB = std::to_string(j);
+
+          // 1. replace all digits of squareA by the letters of a
+          // 2. at the same time, whenever such a digit can be found in squareB replace it by the same letter
+
+          // [digit] => letter
+          std::map<char, char> replaceTable;
+          bool valid = true;
+          for (size_t k = 0; k < replaceA.size(); k++)
+          {
+            char original = replaceA[k];
+            // no replacement rule found ? => abort
+            if (replaceTable.count(original) != 0 &&
+                replaceTable[original] != a[k])
+              valid = false;
+
+            // replacement successful
+            replaceTable[original] = a[k];
+          }
+
+          // two digits must not map to the same letter, though
+          std::set<char> used;
+          for (auto x : replaceTable)
+          {
+            // already used ?
+            if (used.count(x.second) != 0)
+              valid = false;
+            // mark as used
+            used.insert(x.second);
+          }
+
+          // any constraint violation ?
+          if (!valid)
+            continue;
+
+          // using that mapping, can "a" be constructed ?
+          std::string aa;
+          for (auto x : replaceA)
+            aa += replaceTable[x];
+          if (aa != a)
+            continue;
+
+          // using that mapping, can "b" be constructed ?
+          std::string bb;
+          for (auto x : replaceB)
+            bb += replaceTable[x];
+          if (bb != b)
+            continue;
+
+          // new bigger square ?
+          if (result < i)
+            result = i;
+          if (result < j)
+            result = j;
+        }
+
+      return result;
+    }
+
+    int solve()
+    {
+      // find word anagrams: sort letters of each word
+      // [sorted letters] => [list of words]
+      std::map<std::string, std::vector<std::string>> anagrams;
+
+      // read all words from STDIN and fill "anagram" container
+      std::vector<std::string> vs;
+      int n = read(vs);
+      std::cout << "read " << n << " words" << std::endl;
+      for(auto& word : vs)
+      {
+        auto sorted = word;
+        std::sort(sorted.begin(), sorted.end());
+        // add to word anagrams
+        anagrams[sorted].push_back(word);
+      }
+
+      // find longest anagram
+      size_t maxDigits = 0;
+      for (auto i : anagrams)
+        if (i.second.size() > 1) // at least two words share the same letters ?
+          if (maxDigits < i.second.front().size())
+            maxDigits = i.second.front().size();
+      // maxDigits will be 9 for the given input ("INTRODUCE", "REDUCTION")
+
+      unsigned long long maxNumber = 1;
+      for (size_t i = 0; i < maxDigits; i++)
+        maxNumber *= 10;
+
+      // generate all squares
+      // for each square, compute its fingerprint
+      std::map<unsigned long long, std::vector<unsigned long long>> permutations;
+      std::map<unsigned int,       std::set   <unsigned long long>> fingerprintLength;
+      // walk through all square numbers (base^2)
+      unsigned long long base = 1;
+      while (base*base <= maxNumber)
+      {
+        auto square = base*base;
+        auto id     = fingerprint(square);
+        permutations[id].push_back(square);
+
+        auto numDigits = log10(square - 1) + 1;
+        fingerprintLength[numDigits].insert(id);
+
+        base++;
+      }
+
+      // only process non-unique words (size > 1)
+      unsigned long long result = 0;
+      for (auto i : anagrams)
+      {
+        auto pairs = i.second;
+        // no other word with the same letters ?
+        if (pairs.size() == 1)
+          continue;
+
+        // there is a chance that not all words of a permutation group are squares,
+        // there only need to be at least two matching words
+        auto length = pairs.front().size();
+        // compare each word with each other
+        for (size_t i = 0; i < pairs.size(); i++)
+          for (size_t j = i + 1; j < pairs.size(); j++)
+          {
+            // extract all relevant squares
+            for (auto id : fingerprintLength[length])
+            {
+              // and perform the matching process ...
+              auto best = match(pairs[i], pairs[j], permutations[id]);
+              // bigger square found ?
+              if (result < best)
+                result = best;
+            }
+          }
+      }
+
+      std::cout << result << std::endl;
+      return result;
+    }
+};
 
 long long Euler097()
 {
@@ -6288,11 +6697,23 @@ int main()
 //    n = Euler827(18); to_file("Euler827", n);
 //    std::cout << "Euler827 " << n << std::endl;
 
-    n = Euler828(); to_file("Euler828", n);
-    std::cout << "Euler828 " << n << std::endl;
+//    n = Euler828(); to_file("Euler828", n);
+//    std::cout << "Euler828 " << n << std::endl;
+//
+//    n = Euler097(); to_file("Euler097", n);
+//    std::cout << "Euler097 " << n << std::endl;
 
-    n = Euler097(); to_file("Euler097", n);
-    std::cout << "Euler097 " << n << std::endl;
+//    p098 c098;
+//    n = c098.solve(); to_file("Euler098", n);
+//    std::cout << "Euler098 " << n << std::endl;
+//
+//    p099 c099;
+//    n = c099.solve(); to_file("Euler099", n);
+//    std::cout << "Euler099 " << n << std::endl;
+
+    p100 c100;
+    n = c100.solve(); to_file("Euler100", n);
+    std::cout << "Euler100" << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
