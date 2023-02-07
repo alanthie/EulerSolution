@@ -6366,7 +6366,6 @@ int main()
             std::cout << "ERROR in RationalNumberTest" << p.first<< std::endl;
             return 0;
         }
-
     }
 
     //n = mainEuler001() ; to_file("Euler001", n);

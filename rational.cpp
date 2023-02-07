@@ -231,6 +231,10 @@ namespace RationalNS
         if ( fact(45) != BigInteger("119622220865480194561963161495657715064383733760000000000")) return std::pair<int, bool>(19, false);
         if ( RationalNumber(fact(100), fact(99)) != RationalNumber(100, 1) ) return std::pair<int, bool>(20, false);
 
+        if ( (a < b) != true) return std::pair<int, bool>(21, false);
+        if ( (a == b) != false) return std::pair<int, bool>(22, false);
+        if ( (a > b) != false) return std::pair<int, bool>(23, false);
+
         // TODO more tests
         return std::pair<int, bool>(0, true);
     }
