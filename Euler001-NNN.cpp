@@ -1175,7 +1175,7 @@ long long Euler827(long FROM, long long N, long long LIM0, long long LIM, long l
                         );
         }
         if (do_sieve)
-            vt.push_back( std::thread(fill_bitarray_primes, 1));
+            vt.push_back( std::thread(fill_bitarray_primes, 1, false));
         for (size_t j=0;j<vt.size();j++)  vt[j].join();
 
         std::cout << "DONE LIM: "<< LIM << std::endl;
@@ -6714,10 +6714,20 @@ int main()
     n = c100.solve(); to_file("Euler100", n);
     std::cout << "Euler100" << n << std::endl;
 
+
+    // prime sieve
     {
+        auto tstart = std::chrono::steady_clock::now();
+
         std::vector<std::thread> vt;
-        vt.push_back( std::thread(fill_bitarray_primes, 30) );
+        vt.push_back( std::thread(fill_bitarray_primes, 30, true) );
         for (size_t j=0;j<vt.size();j++)  vt[j].join();
+
+        auto tend = std::chrono::steady_clock::now();
+        std::cout << "Elapsed time in milliseconds for prime sieve of BITSET size : "
+            << SIZE_BITSET <<  " "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()
+            << " ms" << std::endl;
 
         if (SIZE_BITSET >= 999983)
         {
