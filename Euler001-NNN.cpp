@@ -436,6 +436,26 @@ long long Euler097()
 std::map<long long, long long> Tinverse(int power, long long t, long double& tminlog);
 long long Euler827(long long N=18)
 {
+//    power: 1 tminlog:1.15118e-4944 2-4 3-1  modulo: 48
+//    power: 2 tminlog:3.8712 2-34 3-1  modulo: 399558677
+//    power: 3 tminlog:24.6656 2-10 3-2 5-3 7-1  modulo: 8064000
+//    power: 4 tminlog:15.9029 2-7 3-3 5-36 7-1  modulo: 236068631
+//    power: 5 tminlog:68.0335 2-205 3-81 7-1  modulo: 166932990
+//    power: 6 tminlog:233.029 2-9901 5-50  modulo: 404103978
+//    power: 7 tminlog:6943.32 2-330 3-44 5-5 7-15  modulo: 20393780
+//    power: 8 tminlog:314.313 2-1674 3-18 5-8 7-9 11-2  modulo: 167433903
+//    power: 9 tminlog:1215.29 2-66 3-51 5-5 7-5 11-3 13-3 19-2 23-2  modulo: 106205849
+//    power: 10 tminlog:146.602 2-1855 3-131 5-50 7-14 11-3  modulo: 272277415
+//    power: 11 tminlog:1544.61 2-91 3-48 5-2046 13-11 17-5 29-5  modulo: 181679380
+//    power: 12 tminlog:3467.94 2-411 3-228 5-68 7-20 11-6 13-36  modulo: 89637498
+//    power: 13 tminlog:790.453 2-2551 3-1190 5-429 7-35 11-1 19-1 23-1  modulo: 110078609
+//    power: 14 tminlog:3842.6 2-3331 3-233 5-50 7-135 11-1 13-14 19-1 23-1 31-1  modulo: 181120505
+//    power: 15 tminlog:2955.84 2-2262 3-36 5-120 7-8 11-3 13-105 17-6 29-5 37-3  modulo: 90084057
+//    power: 16 tminlog:2137.33 2-484 3-239 5-320 7-8 11-2 13-224 17-176 19-2  modulo: 251556746
+//    power: 17 tminlog:2212.52 2-6382 3-243 5-2006 7-168 11-3 13-51 17-5 19-1  modulo: 206982739
+//    power: 18 tminlog:8401.19 2-1275268146 3-130691468 7-1  modulo: 368953911
+//    SUM modulo 397289979
+
     std::map<long long, long long> rm;
     uinteger_t prodmod = 1;
     uinteger_t mod = 409120391;
@@ -6693,8 +6713,11 @@ int main()
 //    n = Euler096(50); to_file("Euler096", n);
 //    std::cout << "Euler096 " << n << std::endl;
 
-//    n = Euler827(18); to_file("Euler827", n);
-//    std::cout << "Euler827 " << n << std::endl;
+    // prime sieve
+    do_prime_sieve(30, true);
+
+    n = Euler827(18); to_file("Euler827", n);
+    std::cout << "Euler827 " << n << std::endl;
 
     n = Euler828(); to_file("Euler828", n);
     std::cout << "Euler828 " << n << std::endl;
@@ -6714,42 +6737,8 @@ int main()
     n = c100.solve(); to_file("Euler100", n);
     std::cout << "Euler100" << n << std::endl;
 
-
-    // prime sieve
-    {
-        auto tstart = std::chrono::steady_clock::now();
-
-        std::vector<std::thread> vt;
-        vt.push_back( std::thread(fill_bitarray_primes, 30, true) );
-        for (size_t j=0;j<vt.size();j++)  vt[j].join();
-
-        auto tend = std::chrono::steady_clock::now();
-        std::cout << "Elapsed time in milliseconds for prime sieve of BITSET size : "
-            << SIZE_BITSET <<  " "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()
-            << " ms" << std::endl;
-
-        if (SIZE_BITSET >= 999983)
-        {
-            if(bitarray[999983] == 0) std::cout << "ok 999983 is prime"<< std::endl;
-            else std::cout << "ERROR 999983 should be prime"<< std::endl;
-        }
-        if (SIZE_BITSET >= 198491329)
-        {
-            if(bitarray[198491329] == 0) std::cout << "ok 198491329 is prime"<< std::endl;
-            else std::cout << "ERROR 198491329 should be prime"<< std::endl;
-        }
-        if (SIZE_BITSET >= 982451653)
-        {
-            if(bitarray[982451653] == 0) std::cout << "ok 982451653 is prime"<< std::endl;
-            else std::cout << "ERROR 982451653 should be prime"<< std::endl;
-        }
-        if (SIZE_BITSET >= 982451653+1)
-        {
-            if(bitarray[982451653+1] == 1) std::cout << "ok 982451653+1 is not prime"<< std::endl;
-            else std::cout << "ERROR 982451653+1 should not be prime"<< std::endl;
-        }
-    }
+//    // prime sieve
+//    do_prime_sieve(30, true);
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;

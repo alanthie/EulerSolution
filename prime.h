@@ -33,17 +33,22 @@ namespace PRIME
         }
     };
 
-    constexpr unsigned int SIZE_BITSET = (1 << 29) + 1; // > few million number scan (bits) < 64 MB
+    constexpr unsigned int SIZE_BITSET = (1 << 20) + 1; // > few million number scan (bits) < 64 MB
     std::bitset<SIZE_BITSET> bitarray;
     std::atomic<long long> last_index_processed = 0;
     bool array_reset = false;
+    bool is_prime(long long n);
 
-
-    void fill_bitarray_primes_at_i(long long i)
+    void fill_bitarray_primes_at_i(long long i, int& nThreadInProgress)
     {
+//        bool next_prime_ready = false;
+//        long long next_prime;
+//        std::vector<std::thread> vt;
+
         if (i <= SIZE_BITSET )
         {
-            if(bitarray[i] == 0) // prime
+            //if (is_prime(i))
+            //if(bitarray[i] == 0) // prime
             {
                 for(long long j = i+1; j< SIZE_BITSET ; j++)
                 {
@@ -51,17 +56,40 @@ namespace PRIME
                     {
                         bitarray[j] = 1; // MUILTIPLE of prime
                     }
+//                    else
+//                    {
+//                        if (next_prime_ready == false)
+//                        {
+//                            next_prime_ready = true;
+//                            next_prime = j;
+//
+//                            if (nThreadInProgress < 30)
+//                            {
+//                                //vt.clear();
+//                                nThreadInProgress++;
+//                                vt.push_back(std::thread(fill_bitarray_primes_at_i, next_prime, std::ref(nThreadInProgress))  );
+//                                //for (size_t k=0;k<vt.size();k++)  vt[k].join();
+//                            }
+//                        }
+//                    }
                 }
+                //for (size_t k=0;k<vt.size();k++)  vt[k].join();
             }
         }
     }
 
     long long find_prime_in_bitarray(long long index_prime, int nthread, bool out=false)
     {
+        if (index_prime >= SIZE_BITSET - 1)
+        {
+            if (last_index_processed >= SIZE_BITSET - 1)
+                return 1;
+        }
+
         if (out)
         {
             const std::lock_guard<std::mutex> lock(mutex_prime_output);
-            std::cout << "find_prime_in_bitarray " << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
+            std::cout << "find_prime_in_bitarray " << index_prime << " SIZE_BITSET: " << SIZE_BITSET << " last_index_processed: " << last_index_processed<< std::endl;
         }
 
         if (array_reset == false)
@@ -75,16 +103,18 @@ namespace PRIME
             }
         }
 
+        int N = 1; //3*nthread
         long long idx = 0;
         std::vector<std::thread> vt;
+        int nThreadInProgress = 0;
 
         for(long long i = 2; i <= SIZE_BITSET - 1 ; i++)
         {
             if (out)
-            if (i % (long long)(SIZE_BITSET/100) == 1)
+            if (i % 1000 == 0)
             {
                 const std::lock_guard<std::mutex> lock(mutex_prime_output);
-                std::cout << "Primes Eratosthenes search ... " << "i:" << i << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
+                std::cout << "Primes Eratosthenes search ... " << "i:" << i << " SIZE_BITSET: " << SIZE_BITSET << " last_index_processed: " << last_index_processed << std::endl;
             }
 
             if(bitarray[i] == 0) // prime
@@ -97,16 +127,25 @@ namespace PRIME
 
                 if (i > last_index_processed)
                 {
-                    vt.clear();
-                    for(long long k = 0; k < 3*nthread ; k++)
+                    if (N==1)
                     {
-                        vt.push_back(std::thread(fill_bitarray_primes_at_i, i+k) );
+                        fill_bitarray_primes_at_i(i, nThreadInProgress);
                     }
-                    for (size_t j=0;j<vt.size();j++)  vt[j].join();
+                    // TODO
+//                    else
+//                    {
+//                        vt.clear();
+//                        // MUST KNOW the first i+3*nthread-1 before lauching extra threads
+//                        for(long long k = 0; k < N ; k++)
+//                        {
+//                            vt.push_back(std::thread(fill_bitarray_primes_at_i, i+k) );
+//                        }
+//                        for (size_t j=0;j<vt.size();j++)  vt[j].join();
+//                    }
                 }
             }
-            last_index_processed = std::max(i+3*nthread-1, last_index_processed.load());
-            i+=nthread-1;
+            last_index_processed = std::max(i+N-1, last_index_processed.load());
+            //i+=N-1;
         }
         return 1;
     }
@@ -469,19 +508,22 @@ namespace PRIME
         std::vector<long long> r;
         long long t = k;
 
+        //https://www.calculator.net/prime-factorization-calculator.html?cvar=20000000000001&x=40&y=17
         if (k==1818181818181) return {246209, 7384709};
-        if (k==181818181818181) return {29, 5879, 26801, 39791};
-        if (k==200000000000001) return {3, 17,  1873, 41161, 50867};
-        if (k==2000000000000001) return {3, 127, 138563, 37884167};
-        if (k==20000000000000001) return {3, 179, 12713, 2929595521};
-        if (k==200000000000000001) return {3, 44087, 691381,2187161};
-        if (k==285714285714285) return {3, 5, 952381,19999999 };
-        if (k==153846153846153) return {3, 3, 31, 197003, 662369};
-        if (k==9478672985781) return {3, 3, 719,32999, 44389};
-        if (k==44543429844097) return {823, 31663, 1709353};
-
-        if (k==2000000000000000001) return {3, 261382937, 2550536291};
-        if (k==19801980198019801) return {35837, 552556860173};
+        else if (k==181818181818181) return {29, 5879, 26801, 39791};
+        else if (k==2000000000001) return {3, 43, 2347, 6605827};
+        else if (k==20000000000001) return {3, 7, 5981, 159234401};
+        else if (k==200000000000001) return {3, 17,  1873, 41161, 50867};
+        else if (k==2000000000000001) return {3, 127, 138563, 37884167};
+        else if (k==20000000000000001) return {3, 179, 12713, 2929595521};
+        else if (k==200000000000000001) return {3, 44087, 691381,2187161};
+        else if (k==285714285714285) return {3, 5, 952381,19999999 };
+        else if (k==153846153846153) return {3, 3, 31, 197003, 662369};
+        else if (k==9478672985781) return {3, 3, 719,32999, 44389};
+        else if (k==44543429844097) return {823, 31663, 1709353};
+        else if (k==2000000000000000001) return {3, 261382937, 2550536291};
+        else if (k==19801980198019801) return {35837, 552556860173};
+        else if (k==1980198019801) return {79, 12823, 1954753};
 
         for (long long i = 2; i <= t; i++)
         {
@@ -783,6 +825,43 @@ namespace PRIME
             }
         }
         return cnt;
+    }
+
+
+    void do_prime_sieve(int nthread, bool out)
+    {
+        auto tstart = std::chrono::steady_clock::now();
+
+        std::vector<std::thread> vt;
+        vt.push_back( std::thread(fill_bitarray_primes, nthread, out) );
+        for (size_t j=0;j<vt.size();j++)  vt[j].join();
+
+        auto tend = std::chrono::steady_clock::now();
+        std::cout << "Elapsed time in milliseconds for prime sieve of BITSET size : "
+            << SIZE_BITSET <<  " "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()
+            << " ms" << std::endl;
+
+        if (SIZE_BITSET >= 999983)
+        {
+            if(bitarray[999983] == 0) std::cout << "ok 999983 is prime"<< std::endl;
+            else std::cout << "ERROR 999983 should be prime"<< std::endl;
+        }
+        if (SIZE_BITSET >= 198491329)
+        {
+            if(bitarray[198491329] == 0) std::cout << "ok 198491329 is prime"<< std::endl;
+            else std::cout << "ERROR 198491329 should be prime"<< std::endl;
+        }
+        if (SIZE_BITSET >= 982451653)
+        {
+            if(bitarray[982451653] == 0) std::cout << "ok 982451653 is prime"<< std::endl;
+            else std::cout << "ERROR 982451653 should be prime"<< std::endl;
+        }
+        if (SIZE_BITSET >= 982451653+1)
+        {
+            if(bitarray[982451653+1] == 1) std::cout << "ok 982451653+1 is not prime"<< std::endl;
+            else std::cout << "ERROR 982451653+1 should not be prime"<< std::endl;
+        }
     }
 }
 #endif // PRIME_H_INCLUDED
