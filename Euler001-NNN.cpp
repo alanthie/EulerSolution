@@ -11,7 +11,7 @@ class p100
 {
 // see https://euler.stephan-brumme.com/100/
 public:
-    int solve()
+    long long solve()
     {
       unsigned int tests = 1;
       //std::cin >> tests;
@@ -62,7 +62,7 @@ public:
           unsigned long long sum2 = b2 / p; // sum2 = sum * (sum - 1)
 
           // (sum-1)^2 < sum2 < sum^2
-          unsigned long long sum  = std::sqrt(sum2) + 1;
+          unsigned long long sum  = (unsigned long long)std::sqrt(sum2) + 1;
           // sqrt may have returned a floating-point number
           if (sum * (sum - 1) != sum2)
             continue;
@@ -85,7 +85,7 @@ public:
 
         // show solution
         std::cout << blue << " " << (red + blue) << std::endl;
-        return blue;
+        return (long long)blue;
       }
 
       return 0;
@@ -172,8 +172,8 @@ public:
       for (unsigned int i = 1; i <= 1000; i++)
       {
         unsigned int base, exponent;
-        base = vn[2*i-2];
-        exponent = vn[2*i-1];
+        base = (unsigned int)vn[2*i-2];
+        exponent = (unsigned int)vn[2*i-1];
         data[exponent * log(base)] = i;
       }
       std::cout << data.rbegin()->second << std::endl;
@@ -336,7 +336,7 @@ public:
       return result;
     }
 
-    int solve()
+    long long solve()
     {
       // find word anagrams: sort letters of each word
       // [sorted letters] => [list of words]
@@ -379,7 +379,7 @@ public:
         permutations[id].push_back(square);
 
         auto numDigits = log10(square - 1) + 1;
-        fingerprintLength[numDigits].insert(id);
+        fingerprintLength[(unsigned int)numDigits].insert(id);
 
         base++;
       }
@@ -401,7 +401,7 @@ public:
           for (size_t j = i + 1; j < pairs.size(); j++)
           {
             // extract all relevant squares
-            for (auto id : fingerprintLength[length])
+            for (auto id : fingerprintLength[(unsigned int)length])
             {
               // and perform the matching process ...
               auto best = match(pairs[i], pairs[j], permutations[id]);
@@ -413,7 +413,7 @@ public:
       }
 
       std::cout << result << std::endl;
-      return result;
+      return (long long)result;
     }
 };
 
@@ -6697,19 +6697,19 @@ int main()
 //    n = Euler827(18); to_file("Euler827", n);
 //    std::cout << "Euler827 " << n << std::endl;
 
-//    n = Euler828(); to_file("Euler828", n);
-//    std::cout << "Euler828 " << n << std::endl;
-//
-//    n = Euler097(); to_file("Euler097", n);
-//    std::cout << "Euler097 " << n << std::endl;
+    n = Euler828(); to_file("Euler828", n);
+    std::cout << "Euler828 " << n << std::endl;
 
-//    p098 c098;
-//    n = c098.solve(); to_file("Euler098", n);
-//    std::cout << "Euler098 " << n << std::endl;
-//
-//    p099 c099;
-//    n = c099.solve(); to_file("Euler099", n);
-//    std::cout << "Euler099 " << n << std::endl;
+    n = Euler097(); to_file("Euler097", n);
+    std::cout << "Euler097 " << n << std::endl;
+
+    p098 c098;
+    n = c098.solve(); to_file("Euler098", n);
+    std::cout << "Euler098 " << n << std::endl;
+
+    p099 c099;
+    n = c099.solve(); to_file("Euler099", n);
+    std::cout << "Euler099 " << n << std::endl;
 
     p100 c100;
     n = c100.solve(); to_file("Euler100", n);
