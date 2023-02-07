@@ -1175,7 +1175,7 @@ long long Euler827(long FROM, long long N, long long LIM0, long long LIM, long l
                         );
         }
         if (do_sieve)
-            vt.push_back( std::thread(fill_bitarray_primes));
+            vt.push_back( std::thread(fill_bitarray_primes, 1));
         for (size_t j=0;j<vt.size();j++)  vt[j].join();
 
         std::cout << "DONE LIM: "<< LIM << std::endl;
@@ -6714,6 +6714,33 @@ int main()
     p100 c100;
     n = c100.solve(); to_file("Euler100", n);
     std::cout << "Euler100" << n << std::endl;
+
+    {
+        std::vector<std::thread> vt;
+        vt.push_back( std::thread(fill_bitarray_primes, 30) );
+        for (size_t j=0;j<vt.size();j++)  vt[j].join();
+
+        if (SIZE_BITSET >= 999983)
+        {
+            if(bitarray[999983] == 0) std::cout << "ok 999983 is prime"<< std::endl;
+            else std::cout << "ERROR 999983 should be prime"<< std::endl;
+        }
+        if (SIZE_BITSET >= 198491329)
+        {
+            if(bitarray[198491329] == 0) std::cout << "ok 198491329 is prime"<< std::endl;
+            else std::cout << "ERROR 198491329 should be prime"<< std::endl;
+        }
+        if (SIZE_BITSET >= 982451653)
+        {
+            if(bitarray[982451653] == 0) std::cout << "ok 982451653 is prime"<< std::endl;
+            else std::cout << "ERROR 982451653 should be prime"<< std::endl;
+        }
+        if (SIZE_BITSET >= 982451653+1)
+        {
+            if(bitarray[982451653+1] == 1) std::cout << "ok 982451653+1 is not prime"<< std::endl;
+            else std::cout << "ERROR 982451653+1 should not be prime"<< std::endl;
+        }
+    }
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;

@@ -6,6 +6,8 @@
 
 namespace PRIME
 {
+    std::mutex mutex_prime_output;
+
     class random_engine
     {
       public:
@@ -31,26 +33,56 @@ namespace PRIME
         }
     };
 
-    constexpr unsigned int SIZE_BITSET = (1 << 22) + 1; // > few million number scan (bits) < 64 MB
+    constexpr unsigned int SIZE_BITSET = (1 << 29) + 1; // > few million number scan (bits) < 64 MB
     std::bitset<SIZE_BITSET> bitarray;
     std::atomic<long long> last_index_processed = 0;
     bool array_reset = false;
 
-    long long find_prime_in_bitarray(long long index_prime)
+
+    void fill_bitarray_primes_at_i(long long i)
     {
-        //std::cout << "searching prime index (Sieve of Eratosthenes algo) ... " << index_prime << std::endl;
+        if (i <= SIZE_BITSET )
+        {
+            if(bitarray[i] == 0) // prime
+            {
+                for(long long j = i+1; j< SIZE_BITSET ; j++)
+                {
+                    if ( j % i == 0 ) // j a MUILTIPLE of prime i
+                    {
+                        bitarray[j] = 1; // MUILTIPLE of prime
+                    }
+                }
+            }
+        }
+    }
+
+    long long find_prime_in_bitarray(long long index_prime, int nthread)
+    {
+        {
+            const std::lock_guard<std::mutex> lock(mutex_prime_output);
+            std::cout << "find_prime_in_bitarray " << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
+        }
+
         if (array_reset == false)
         {
             array_reset = true;
             bitarray.reset();
-            std::cout << "Primes Eratosthenes array reset ... " << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
+            {
+                const std::lock_guard<std::mutex> lock(mutex_prime_output);
+                std::cout << "Primes Eratosthenes array was reset ... " << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
+            }
         }
 
         long long idx = 0;
-        for(long long i = 2; i <= SIZE_BITSET  - 1 ; i++)
+        std::vector<std::thread> vt;
+
+        for(long long i = 2; i <= SIZE_BITSET - 1 ; i++)
         {
-            if (i % 100000 == 1)
+            if (i % (long long)(SIZE_BITSET/100) == 1)
+            {
+                const std::lock_guard<std::mutex> lock(mutex_prime_output);
                 std::cout << "Primes Eratosthenes search ... " << "i:" << i << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
+            }
 
             if(bitarray[i] == 0) // prime
             {
@@ -62,30 +94,31 @@ namespace PRIME
 
                 if (i > last_index_processed)
                 {
-                    for(long long j = i+1; j< SIZE_BITSET ; j++)
+                    vt.clear();
+                    for(long long k = 0; k < 3*nthread ; k++)
                     {
-                        if ( j % i == 0 ) // j a MUILTIPLE of prime i
-                        {
-                            bitarray[j] = 1; // MUILTIPLE of prime
-                        }
+                        vt.push_back(std::thread(fill_bitarray_primes_at_i, i+k) );
                     }
+                    for (size_t j=0;j<vt.size();j++)  vt[j].join();
                 }
             }
-            last_index_processed = std::max(i, last_index_processed.load());
+            last_index_processed = std::max(i+3*nthread-1, last_index_processed.load());
+            i+=nthread-1;
         }
         return 1;
     }
 
     //std::thread(fill_bitarray_primes))
-    void fill_bitarray_primes()
+    void fill_bitarray_primes(int nthread)
     {
         long long index_prime = 0;
         while (last_index_processed < SIZE_BITSET - 1)
         {
             index_prime+=10000;
-            find_prime_in_bitarray(index_prime);
+            find_prime_in_bitarray(index_prime, nthread);
         }
     }
+
 
     using prime_type = long long;
     using prime_container = std::vector<long long>;
