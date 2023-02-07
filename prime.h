@@ -33,52 +33,117 @@ namespace PRIME
         }
     };
 
-    constexpr unsigned int SIZE_BITSET = (1 << 20) + 1; // > few million number scan (bits) < 64 MB
+    constexpr unsigned int SIZE_BITSET = (1 << 28) + 1; // > few million number scan (bits) < 64 MB
     std::bitset<SIZE_BITSET> bitarray;
     std::atomic<long long> last_index_processed = 0;
     bool array_reset = false;
-    bool is_prime(long long n);
 
-    void fill_bitarray_primes_at_i(long long i, int& nThreadInProgress)
+    bool is_prime(long long n, long long istart);
+    long long next_prime(long long p, long long n, bool can_check_bitset_for_none_prime, long long istart);
+    void check_prime_sieve();
+
+    void fill_bitarray_primes_at_i(long long i)
     {
-//        bool next_prime_ready = false;
-//        long long next_prime;
-//        std::vector<std::thread> vt;
-
-        if (i <= SIZE_BITSET )
+        if (i < SIZE_BITSET )
         {
-            //if (is_prime(i))
-            //if(bitarray[i] == 0) // prime
+            for(long long j = i+1; j< SIZE_BITSET ; j++)
             {
-                for(long long j = i+1; j< SIZE_BITSET ; j++)
+                if ( j % i == 0 ) // j a MUILTIPLE of prime i
                 {
-                    if ( j % i == 0 ) // j a MUILTIPLE of prime i
-                    {
-                        bitarray[j] = 1; // MUILTIPLE of prime
-                    }
-//                    else
-//                    {
-//                        if (next_prime_ready == false)
-//                        {
-//                            next_prime_ready = true;
-//                            next_prime = j;
-//
-//                            if (nThreadInProgress < 30)
-//                            {
-//                                //vt.clear();
-//                                nThreadInProgress++;
-//                                vt.push_back(std::thread(fill_bitarray_primes_at_i, next_prime, std::ref(nThreadInProgress))  );
-//                                //for (size_t k=0;k<vt.size();k++)  vt[k].join();
-//                            }
-//                        }
-//                    }
+                    bitarray[j] = 1; // MUILTIPLE of prime
                 }
-                //for (size_t k=0;k<vt.size();k++)  vt[k].join();
             }
         }
     }
 
-    long long find_prime_in_bitarray(long long index_prime, int nthread, bool out=false)
+    std::vector<long long> get_n_next_prime(long long last_prime, size_t N, long long limit_prime)
+    {
+        std::vector<long long> r;
+        long long entry = last_prime;
+        while(true)
+        {
+            last_prime = next_prime(last_prime, 1000+last_prime*last_prime, true, (entry<2) ? 2 : entry);
+
+            if (limit_prime >= 0)
+                if (last_prime > limit_prime) break;
+
+            if (r.size() >= N) break;
+            r.push_back(last_prime);
+        }
+        return r;
+    }
+
+    void prime_sieve_mt(int max_number_of_thread, bool out)
+    {
+        std::vector<long long> vnext_primes;
+        std::vector<std::thread> vt;
+        long long last_prime = 1;
+
+        auto tstart = std::chrono::steady_clock::now();
+
+        if (array_reset == false)
+        {
+            array_reset = true;
+            bitarray.reset();
+            if (out)
+            {
+                const std::lock_guard<std::mutex> lock(mutex_prime_output);
+                std::cout << "Primes Eratosthenes array was reset ... " << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
+            }
+        }
+
+        while (true)
+        {
+            if (last_prime*last_prime >= SIZE_BITSET-1) break;
+
+            vt.clear();
+            vnext_primes = get_n_next_prime(last_prime, max_number_of_thread, SIZE_BITSET-1);
+
+            if (vnext_primes.size() >= 1)
+            {
+                if (out)
+                {
+                    const std::lock_guard<std::mutex> lock(mutex_prime_output);
+                    std::cout << "filling BITSET " <<  SIZE_BITSET << " with multiples of ";
+                    for(size_t i = 0; i < vnext_primes.size() ; i++)
+                    {
+                        std::cout << vnext_primes[i] << " ";
+                    }
+                    std::cout << std::endl;
+                }
+
+                for(size_t i = 0; i < vnext_primes.size() ; i++)
+                {
+                    vt.push_back(std::thread(fill_bitarray_primes_at_i, vnext_primes[i]));
+                }
+                for (size_t k=0;k<vt.size();k++)  vt[k].join();
+
+                last_index_processed = std::max(vnext_primes[vnext_primes.size() - 1], last_index_processed.load());
+                last_prime = vnext_primes[vnext_primes.size() - 1];
+            }
+            else
+            {
+                break;
+            }
+
+            if (last_index_processed >= SIZE_BITSET - 1)
+                break;
+        }
+
+        auto tend = std::chrono::steady_clock::now();
+        if (out)
+        {
+            const std::lock_guard<std::mutex> lock(mutex_prime_output);
+            std::cout << "Elapsed time in milliseconds for prime sieve of BITSET size : "
+                << SIZE_BITSET <<  " "
+                << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()
+                << " ms" << std::endl;
+        }
+        check_prime_sieve();
+    }
+
+
+    long long find_prime_in_bitarray(long long index_prime, bool out=false)
     {
         if (index_prime >= SIZE_BITSET - 1)
         {
@@ -103,10 +168,8 @@ namespace PRIME
             }
         }
 
-        int N = 1; //3*nthread
         long long idx = 0;
         std::vector<std::thread> vt;
-        int nThreadInProgress = 0;
 
         for(long long i = 2; i <= SIZE_BITSET - 1 ; i++)
         {
@@ -127,37 +190,22 @@ namespace PRIME
 
                 if (i > last_index_processed)
                 {
-                    if (N==1)
-                    {
-                        fill_bitarray_primes_at_i(i, nThreadInProgress);
-                    }
-                    // TODO
-//                    else
-//                    {
-//                        vt.clear();
-//                        // MUST KNOW the first i+3*nthread-1 before lauching extra threads
-//                        for(long long k = 0; k < N ; k++)
-//                        {
-//                            vt.push_back(std::thread(fill_bitarray_primes_at_i, i+k) );
-//                        }
-//                        for (size_t j=0;j<vt.size();j++)  vt[j].join();
-//                    }
+                    fill_bitarray_primes_at_i(i);
                 }
             }
-            last_index_processed = std::max(i+N-1, last_index_processed.load());
-            //i+=N-1;
+            last_index_processed = std::max(i, last_index_processed.load());
         }
         return 1;
     }
 
     //std::thread(fill_bitarray_primes))
-    void fill_bitarray_primes(int nthread, bool out=false)
+    void fill_bitarray_primes(bool out=false)
     {
         long long index_prime = 0;
         while (last_index_processed < SIZE_BITSET - 1)
         {
             index_prime+=10000;
-            find_prime_in_bitarray(index_prime, nthread, out);
+            find_prime_in_bitarray(index_prime, out);
         }
     }
 
@@ -167,7 +215,7 @@ namespace PRIME
     std::map<long long, bool> map_prime;
     std::map<uinteger_t, bool> map_uprime;
 
-    bool is_prime(long long n)
+    bool is_prime(long long n, long long istart = 2)
     {
         if (map_prime.find(n) != map_prime.end())
             return true;
@@ -204,7 +252,7 @@ namespace PRIME
         }
 
         uinteger_t N = n;
-        for (uinteger_t i=2; i*i <= N; i++)
+        for (uinteger_t i=istart; i*i <= N; i++)
         {
             // a divisor exist
             if (N % i == 0) return false;
@@ -239,12 +287,19 @@ namespace PRIME
         return true;
     }
 
-    long long next_prime(long long p, long long n)
+    long long next_prime(long long p, long long n, bool can_check_bitset_for_none_prime = false, long long istart = 2)
     {
         long long N = n;
         for (long long i = p+1; i <= N; i++)
         {
-            if (is_prime(i)) return i;
+            if (can_check_bitset_for_none_prime)
+            {
+                if (i <= SIZE_BITSET - 1)
+                    if (bitarray[i] == 1) // MUILTIPLE of prime
+                        continue;
+            }
+            if (is_prime(i, istart))
+                return i;
         }
         return 2;
     }
@@ -828,24 +883,24 @@ namespace PRIME
     }
 
 
-    void do_prime_sieve(int nthread, bool out)
+    void check_prime_sieve()
     {
-        auto tstart = std::chrono::steady_clock::now();
-
-        std::vector<std::thread> vt;
-        vt.push_back( std::thread(fill_bitarray_primes, nthread, out) );
-        for (size_t j=0;j<vt.size();j++)  vt[j].join();
-
-        auto tend = std::chrono::steady_clock::now();
-        std::cout << "Elapsed time in milliseconds for prime sieve of BITSET size : "
-            << SIZE_BITSET <<  " "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()
-            << " ms" << std::endl;
+        //auto tstart = std::chrono::steady_clock::now();
+        //auto tend = std::chrono::steady_clock::now();
+//        std::cout << "Elapsed time in milliseconds for prime sieve of BITSET size : "
+//            << SIZE_BITSET <<  " "
+//            << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()
+//            << " ms" << std::endl;
 
         if (SIZE_BITSET >= 999983)
         {
             if(bitarray[999983] == 0) std::cout << "ok 999983 is prime"<< std::endl;
             else std::cout << "ERROR 999983 should be prime"<< std::endl;
+        }
+        if (SIZE_BITSET >= 999983+1)
+        {
+            if(bitarray[999983+1] == 1) std::cout << "ok 999983+1 is not prime"<< std::endl;
+            else std::cout << "ERROR 999983+1 should not be prime"<< std::endl;
         }
         if (SIZE_BITSET >= 198491329)
         {

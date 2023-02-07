@@ -1195,7 +1195,7 @@ long long Euler827(long FROM, long long N, long long LIM0, long long LIM, long l
                         );
         }
         if (do_sieve)
-            vt.push_back( std::thread(fill_bitarray_primes, 1, false));
+            vt.push_back( std::thread(fill_bitarray_primes, false));
         for (size_t j=0;j<vt.size();j++)  vt[j].join();
 
         std::cout << "DONE LIM: "<< LIM << std::endl;
@@ -6714,31 +6714,32 @@ int main()
 //    std::cout << "Euler096 " << n << std::endl;
 
     // prime sieve
-    do_prime_sieve(30, true);
+    //do_prime_sieve(30, true);
+    prime_sieve_mt(30, true);
 
     n = Euler827(18); to_file("Euler827", n);
     std::cout << "Euler827 " << n << std::endl;
 
-    n = Euler828(); to_file("Euler828", n);
-    std::cout << "Euler828 " << n << std::endl;
+//    n = Euler828(); to_file("Euler828", n);
+//    std::cout << "Euler828 " << n << std::endl;
+//
+//    n = Euler097(); to_file("Euler097", n);
+//    std::cout << "Euler097 " << n << std::endl;
+//
+//    p098 c098;
+//    n = c098.solve(); to_file("Euler098", n);
+//    std::cout << "Euler098 " << n << std::endl;
+//
+//    p099 c099;
+//    n = c099.solve(); to_file("Euler099", n);
+//    std::cout << "Euler099 " << n << std::endl;
+//
+//    p100 c100;
+//    n = c100.solve(); to_file("Euler100", n);
+//    std::cout << "Euler100" << n << std::endl;
 
-    n = Euler097(); to_file("Euler097", n);
-    std::cout << "Euler097 " << n << std::endl;
 
-    p098 c098;
-    n = c098.solve(); to_file("Euler098", n);
-    std::cout << "Euler098 " << n << std::endl;
-
-    p099 c099;
-    n = c099.solve(); to_file("Euler099", n);
-    std::cout << "Euler099 " << n << std::endl;
-
-    p100 c100;
-    n = c100.solve(); to_file("Euler100", n);
-    std::cout << "Euler100" << n << std::endl;
-
-//    // prime sieve
-//    do_prime_sieve(30, true);
+//void prime_sieve_mt(int max_number_of_thread)
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
