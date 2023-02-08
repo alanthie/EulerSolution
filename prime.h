@@ -307,7 +307,7 @@ namespace PRIME
             {
                 break;
             }
-            if (last_index_processed >= SIZE_BITSET - 1) break;
+            if (last_index_processed >= SIZE_BITSET_SQROOT) break;
         }
         last_index_processed = SIZE_BITSET - 1;
         auto tend = std::chrono::steady_clock::now();
@@ -315,7 +315,7 @@ namespace PRIME
         for (size_t k=0;k<vt.size();k++)  vt[k]->exit();
         for (size_t k=0;k<vt.size();k++)  delete vt[k];
 
-        //if (out)
+        if (out)
         {
             const std::lock_guard<std::mutex> lock(mutex_prime_output);
             std::cout << "Elapsed time in milliseconds for prime sieve of BITSET size : "
@@ -323,8 +323,9 @@ namespace PRIME
                 << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()<< " ms"
                 << " next total time " << next_count <<  " microseconds"
                 << std::endl;
+
+            check_prime_sieve();
         }
-        check_prime_sieve();
     }
 
 
@@ -1074,12 +1075,6 @@ namespace PRIME
 
     void check_prime_sieve()
     {
-        //auto tstart = std::chrono::steady_clock::now();
-        //auto tend = std::chrono::steady_clock::now();
-//        std::cout << "Elapsed time in milliseconds for prime sieve of BITSET size : "
-//            << SIZE_BITSET <<  " "
-//            << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()
-//            << " ms" << std::endl;
 
         std::cout << "last_index_processed "<< last_index_processed << std::endl;
         std::cout << "SIZE_BITSET "<< SIZE_BITSET << std::endl;
@@ -1119,7 +1114,7 @@ namespace PRIME
                 if (b!=ba) std::cout << "ERROR with " << i << " " << b << " " << ba << std::endl;
             }
         }
-        std::cout << "ALL number to 10000000 checked " << std::endl;
+        std::cout << "ALL number to 10,000,000 checked " << std::endl;
     }
 }
 #endif // PRIME_H_INCLUDED

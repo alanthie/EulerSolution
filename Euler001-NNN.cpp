@@ -6715,10 +6715,10 @@ int main()
 
     // prime sieve
     //prime_sieve_mt(32, false);
-    prime_sieve_mt2(30, false);
+    prime_sieve_mt2(30, true);
 
-    n = Euler827(18); to_file("Euler827", n);
-    std::cout << "Euler827 " << n << std::endl;
+//    n = Euler827(18); to_file("Euler827", n);
+//    std::cout << "Euler827 " << n << std::endl;
 
 //    n = Euler828(); to_file("Euler828", n);
 //    std::cout << "Euler828 " << n << std::endl;
