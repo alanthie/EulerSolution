@@ -35,12 +35,15 @@ namespace PRIME
         }
     };
 
-    constexpr unsigned int SIZE_BITSET = (1 << 30) + 1; //  30 == scan 1 billion number (bits) < 128 MB
+    constexpr long long ONE(1);
+    constexpr long long SIZE_BITSET = (ONE << 30) + 1; //  30 == scan 1 billion number (bits) < 128 MB
+    constexpr long long SIZE_BITSET_SQROOT = (unsigned long)std::sqrt(SIZE_BITSET);
 
     // std::bitset<SIZE_BITSET> bitarray;
     // ATOMIC BITSET https://github.com/ekg/atomicbitvector
-    atomicbitvector::atomic_bv_t bitarray(SIZE_BITSET);
-    std::atomic<long long> last_index_processed = 0;
+    atomicbitvector::atomic_bv_t bitarray(SIZE_BITSET+1);
+    atomicbitvector::atomic_bv_t bitarray_index_processed(SIZE_BITSET_SQROOT+1);
+    std::atomic<long long> last_index_processed = 1;
 
     bool        is_prime(long long n, long long istart);
     long long   next_prime(long long p, long long n, bool can_check_bitset_for_none_prime, long long istart);
@@ -54,6 +57,18 @@ namespace PRIME
             for(long long j = i*2; j< SIZE_BITSET ; j+=i)
             {
                 bitarray.set(j); // MUILTIPLE of prime
+            }
+
+            if (i < SIZE_BITSET_SQROOT)
+            {
+                bitarray_index_processed.set(i);
+                if (i == last_index_processed + 1) last_index_processed += 1;
+
+                for(long long j = last_index_processed+1; j< SIZE_BITSET_SQROOT; j++)
+                {
+                    if (bitarray_index_processed.test(j)) last_index_processed++;
+                    else break;
+                }
             }
         }
     }
@@ -212,6 +227,7 @@ namespace PRIME
         check_prime_sieve();
     }
 
+    // 1 billion scan in 1.5 sec
     void prime_sieve_mt2(int max_number_of_thread, bool out)
     {
         bool first_time = true;
@@ -261,34 +277,30 @@ namespace PRIME
 
                 if (first_time == false)
                 {
-                    for (size_t k=0;k<vnext_primes.size(); k++)
+                    cnt_done = 0;
+                    std::vector<bool> vdispatched(vnext_primes.size(), false);
+                    while (cnt_done < vnext_primes.size())
                     {
-                        while (vt[k]->haswork() == true)
+                        for (size_t k=0;k<vnext_primes.size(); k++)
                         {
-                            std::cout <<  "ERROR WAITING " <<  vnext_primes[k] << std::endl;
-                            std::this_thread::sleep_for (std::chrono::microseconds(1));
+                            if (vdispatched[k] == false)
+                            {
+                                for (size_t n=0; n<vt.size(); n++)
+                                {
+                                    if (vt[n]->haswork() == false)
+                                    {
+                                        vt[n]->set_work(vnext_primes[k]);
+                                        cnt_done++;
+                                        vdispatched[k] = true;
+                                        break;
+                                    }
+                                }
+                            }
                         }
-                        vt[k]->set_work(vnext_primes[k]);
+                        std::this_thread::sleep_for (std::chrono::microseconds(1));
                     }
                 }
                 first_time = false;
-
-                // wait all done
-                while(true)
-                {
-                    cnt_done = 0;
-                    for (size_t k=0;k<vnext_primes.size(); k++)
-                    {
-                        if (vt[k]->haswork() == false) cnt_done++;
-                    }
-                    if (cnt_done == vnext_primes.size()) break;
-
-                    // sleep TODO
-                    std::this_thread::sleep_for (std::chrono::microseconds(1));
-
-                }
-
-                last_index_processed = std::max(vnext_primes[vnext_primes.size() - 1], last_index_processed.load());
                 last_prime = vnext_primes[vnext_primes.size() - 1];
             }
             else
