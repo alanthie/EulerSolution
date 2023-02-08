@@ -6714,7 +6714,8 @@ int main()
 //    std::cout << "Euler096 " << n << std::endl;
 
     // prime sieve
-    prime_sieve_mt(40, true);
+    //prime_sieve_mt(32, false);
+    prime_sieve_mt2(30, false);
 
     n = Euler827(18); to_file("Euler827", n);
     std::cout << "Euler827 " << n << std::endl;

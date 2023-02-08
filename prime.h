@@ -35,7 +35,7 @@ namespace PRIME
         }
     };
 
-    constexpr unsigned int SIZE_BITSET = (1 << 30) + 1; // > few million number scan (bits) < 64 MB
+    constexpr unsigned int SIZE_BITSET = (1 << 30) + 1; //  30 == scan 1 billion number (bits) < 128 MB
 
     // std::bitset<SIZE_BITSET> bitarray;
     // ATOMIC BITSET https://github.com/ekg/atomicbitvector
@@ -47,7 +47,7 @@ namespace PRIME
     void        check_prime_sieve();
     bool        is_prime_brute_force(long long n);
 
-    void fill_bitarray_primes_at_i(long long i)
+    inline void fill_bitarray_primes_at_i(long long i)
     {
         if (i < SIZE_BITSET )
         {
@@ -58,13 +58,91 @@ namespace PRIME
         }
     }
 
+    class PrimeThread
+    {
+    public:
+
+        std::atomic<bool> done = false;
+        std::atomic<bool> has_work = false;
+        std::atomic<bool> is_working = false;
+        long long k;
+        std::thread* t = nullptr;;
+
+        PrimeThread() {}
+        ~PrimeThread()
+        {
+            if (t!=nullptr)
+            {
+                t->join();
+
+                delete t;
+                t = nullptr;
+            }
+        }
+
+        bool set_work(long long i)
+        {
+            if (has_work == false)
+            {
+                k = i;
+                has_work = true;
+                return true;
+            }
+            return false;
+        }
+
+        bool haswork() {return has_work.load();}
+
+        void exit()
+        {
+            done = true;
+        }
+
+        void start(long long i)
+        {
+            if (t == nullptr)
+            {
+                t = new std::thread(&PrimeThread::run_loop, this);
+                this->set_work(i);
+            }
+        }
+
+        void run_loop()
+        {
+            while(done==false)
+            {
+                if (is_working == false)
+                {
+                    if (has_work == true)
+                    {
+                        is_working = true;
+                        fill_bitarray_primes_at_i(k);
+
+                        is_working = false;
+                        has_work = false;
+                    }
+                    else
+                    {
+                        std::this_thread::sleep_for (std::chrono::microseconds(1));
+                    }
+                }
+                else
+                {
+                    std::this_thread::sleep_for (std::chrono::microseconds(1));
+                }
+            }
+        }
+    };
+
+    // COULD BE improve for speed
     std::vector<long long> get_n_next_prime(long long last_prime, size_t N, long long limit_prime)
     {
         std::vector<long long> r;
         long long entry = last_prime;
+        long long lim =  1000+last_prime*last_prime;
         while(true)
         {
-            last_prime = next_prime(last_prime, 1000+last_prime*last_prime, true, (entry<2) ? 2 : entry);
+            last_prime = next_prime(last_prime, lim, true, (entry<2) ? 2 : entry);
 
             if (limit_prime >= 0)
                 if (last_prime > limit_prime) break;
@@ -123,13 +201,116 @@ namespace PRIME
         last_index_processed = SIZE_BITSET - 1;
 
         auto tend = std::chrono::steady_clock::now();
-        if (out)
+        //if (out)
         {
             const std::lock_guard<std::mutex> lock(mutex_prime_output);
             std::cout << "Elapsed time in milliseconds for prime sieve of BITSET size : "
                 << SIZE_BITSET <<  " "
                 << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()
                 << " ms" << std::endl;
+        }
+        check_prime_sieve();
+    }
+
+    void prime_sieve_mt2(int max_number_of_thread, bool out)
+    {
+        bool first_time = true;
+        std::vector<long long> vnext_primes;
+        std::vector<PrimeThread*> vt;
+        long long last_prime = 1;
+        size_t cnt_done;
+        double next_count(0);
+        std::chrono::time_point<std::chrono::steady_clock> tstart_next ;
+        std::chrono::time_point<std::chrono::steady_clock> tend_next ;
+
+        auto tstart = std::chrono::steady_clock::now();
+
+        while (true)
+        {
+            if (last_prime*last_prime >= SIZE_BITSET-1) break;
+
+            tstart_next = std::chrono::steady_clock::now();
+            vnext_primes = get_n_next_prime(last_prime, max_number_of_thread, SIZE_BITSET-1);
+            tend_next  = std::chrono::steady_clock::now();
+            next_count += (double)std::chrono::duration_cast<std::chrono::microseconds>(tend_next - tstart_next).count();
+
+            if (vnext_primes.size() >= 1)
+            {
+                if (out)
+                {
+                    const std::lock_guard<std::mutex> lock(mutex_prime_output);
+                    std::cout << "filling BITSET " <<  SIZE_BITSET << " with multiples of ";
+                    for(size_t i = 0; i < vnext_primes.size() ; i++)
+                    {
+                        std::cout << vnext_primes[i] << " ";
+                    }
+                    std::cout << std::endl;
+                }
+
+                // First time
+                if (vt.size() == 0)
+                {
+                    PrimeThread* t;
+                    for(size_t i = 0; i < vnext_primes.size() ; i++)
+                    {
+                        t = new PrimeThread();
+                        vt.push_back(t);
+                        t->start(vnext_primes[i] );
+                    }
+                }
+
+                if (first_time == false)
+                {
+                    for (size_t k=0;k<vnext_primes.size(); k++)
+                    {
+                        while (vt[k]->haswork() == true)
+                        {
+                            std::cout <<  "ERROR WAITING " <<  vnext_primes[k] << std::endl;
+                            std::this_thread::sleep_for (std::chrono::microseconds(1));
+                        }
+                        vt[k]->set_work(vnext_primes[k]);
+                    }
+                }
+                first_time = false;
+
+                // wait all done
+                while(true)
+                {
+                    cnt_done = 0;
+                    for (size_t k=0;k<vnext_primes.size(); k++)
+                    {
+                        if (vt[k]->haswork() == false) cnt_done++;
+                    }
+                    if (cnt_done == vnext_primes.size()) break;
+
+                    // sleep TODO
+                    std::this_thread::sleep_for (std::chrono::microseconds(1));
+
+                }
+
+                last_index_processed = std::max(vnext_primes[vnext_primes.size() - 1], last_index_processed.load());
+                last_prime = vnext_primes[vnext_primes.size() - 1];
+            }
+            else
+            {
+                break;
+            }
+            if (last_index_processed >= SIZE_BITSET - 1) break;
+        }
+        last_index_processed = SIZE_BITSET - 1;
+        auto tend = std::chrono::steady_clock::now();
+
+        for (size_t k=0;k<vt.size();k++)  vt[k]->exit();
+        for (size_t k=0;k<vt.size();k++)  delete vt[k];
+
+        //if (out)
+        {
+            const std::lock_guard<std::mutex> lock(mutex_prime_output);
+            std::cout << "Elapsed time in milliseconds for prime sieve of BITSET size : "
+                << SIZE_BITSET <<  " "
+                << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()<< " ms"
+                << " next total time " << next_count <<  " microseconds"
+                << std::endl;
         }
         check_prime_sieve();
     }
