@@ -6063,7 +6063,7 @@ long long Euler010(long N)
     long long sum = 0;
 	for(long long i = 2; i < N  ; i++)
 	{
-		if(bitarray[i] == 0) // prime
+		if(bitarray.test(i) == false) // prime
 		{
             sum+=i;
 
@@ -6073,7 +6073,7 @@ long long Euler010(long N)
                 {
                     if ( j % i == 0 ) // j a MUILTIPLE of prime i
                     {
-                        bitarray[j] = 1; // MUILTIPLE of prime
+                        bitarray.set(j); // MUILTIPLE of prime
                     }
                 }
 			}
@@ -6230,11 +6230,11 @@ long long largest_palindrome(long long max_num)
 long long find_prime(long long index_prime)
 {
     std::cout << "searching prime index (Sieve of Eratosthenes algo) ... " << index_prime << std::endl;
-    if (array_reset == false)
-    {
-        array_reset = true;
-        bitarray.reset();
-    }
+//    if (array_reset == false)
+//    {
+//        array_reset = true;
+//        bitarray.reset();
+//    }
 
 	long long idx = 0;
 	for(long long i = 2; i <= SIZE_BITSET  - 1 ; i++)
@@ -6242,7 +6242,7 @@ long long find_prime(long long index_prime)
         if (i % 1000 == 1)
             std::cout << "searching primes ... " << idx<< " : " << i << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
 
-		if(bitarray[i] == 0) // prime
+		if(bitarray.test(i) == false) // prime
 		{
 			idx++;
             if(idx == index_prime)
@@ -6256,7 +6256,7 @@ long long find_prime(long long index_prime)
                 {
                     if ( j % i == 0 ) // j a MUILTIPLE of prime i
                     {
-                        bitarray[j] = 1; // MUILTIPLE of prime
+                        bitarray.set(j); // MUILTIPLE of prime
                     }
                 }
 			}
@@ -6279,7 +6279,7 @@ long long largest_prime_factor(long long p)
         {
             if (i <= last_index_processed)
             {
-                if (bitarray[i] == 0) // prime
+                if (bitarray.test(i) == false) // prime
                 {
                     if (pp % i == 0)
                     {
@@ -6304,18 +6304,18 @@ long long next_prime_factor(long long n)
     if (n == 1) return 1;
     if (n==2) return 2;
 
-    if (array_reset == false)
-    {
-        array_reset = true;
-        bitarray.reset();
-    }
+//    if (array_reset == false)
+//    {
+//        array_reset = true;
+//        bitarray.reset();
+//    }
 
     long long next_factor = n;
     if (last_index_processed >= n)
     {
         if (n <= SIZE_BITSET)
         {
-            if (bitarray[n] == 0) // prime
+            if (bitarray.test(n) == false) // prime
             {
                 return n;
             }
@@ -6326,7 +6326,7 @@ long long next_prime_factor(long long n)
     {
         if (i <= last_index_processed)
         {
-            if (bitarray[i] == 0) // prime
+            if (bitarray.test(i) == false) // prime
             {
                 if (n % i == 0)
                 {
@@ -6714,8 +6714,7 @@ int main()
 //    std::cout << "Euler096 " << n << std::endl;
 
     // prime sieve
-    //do_prime_sieve(30, true);
-    prime_sieve_mt(30, true);
+    prime_sieve_mt(40, true);
 
     n = Euler827(18); to_file("Euler827", n);
     std::cout << "Euler827 " << n << std::endl;
@@ -6738,8 +6737,6 @@ int main()
 //    n = c100.solve(); to_file("Euler100", n);
 //    std::cout << "Euler100" << n << std::endl;
 
-
-//void prime_sieve_mt(int max_number_of_thread)
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;

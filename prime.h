@@ -4,6 +4,8 @@
 #include "common.h"
 #include "matrix.hpp"
 
+#include "atomic_bitvector.hpp"
+
 namespace PRIME
 {
     std::mutex mutex_prime_output;
@@ -33,25 +35,25 @@ namespace PRIME
         }
     };
 
-    constexpr unsigned int SIZE_BITSET = (1 << 28) + 1; // > few million number scan (bits) < 64 MB
-    std::bitset<SIZE_BITSET> bitarray;
-    std::atomic<long long> last_index_processed = 0;
-    bool array_reset = false;
+    constexpr unsigned int SIZE_BITSET = (1 << 30) + 1; // > few million number scan (bits) < 64 MB
 
-    bool is_prime(long long n, long long istart);
-    long long next_prime(long long p, long long n, bool can_check_bitset_for_none_prime, long long istart);
-    void check_prime_sieve();
+    // std::bitset<SIZE_BITSET> bitarray;
+    // ATOMIC BITSET https://github.com/ekg/atomicbitvector
+    atomicbitvector::atomic_bv_t bitarray(SIZE_BITSET);
+    std::atomic<long long> last_index_processed = 0;
+
+    bool        is_prime(long long n, long long istart);
+    long long   next_prime(long long p, long long n, bool can_check_bitset_for_none_prime, long long istart);
+    void        check_prime_sieve();
+    bool        is_prime_brute_force(long long n);
 
     void fill_bitarray_primes_at_i(long long i)
     {
         if (i < SIZE_BITSET )
         {
-            for(long long j = i+1; j< SIZE_BITSET ; j++)
+            for(long long j = i*2; j< SIZE_BITSET ; j+=i)
             {
-                if ( j % i == 0 ) // j a MUILTIPLE of prime i
-                {
-                    bitarray[j] = 1; // MUILTIPLE of prime
-                }
+                bitarray.set(j); // MUILTIPLE of prime
             }
         }
     }
@@ -80,17 +82,6 @@ namespace PRIME
         long long last_prime = 1;
 
         auto tstart = std::chrono::steady_clock::now();
-
-        if (array_reset == false)
-        {
-            array_reset = true;
-            bitarray.reset();
-            if (out)
-            {
-                const std::lock_guard<std::mutex> lock(mutex_prime_output);
-                std::cout << "Primes Eratosthenes array was reset ... " << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
-            }
-        }
 
         while (true)
         {
@@ -129,6 +120,7 @@ namespace PRIME
             if (last_index_processed >= SIZE_BITSET - 1)
                 break;
         }
+        last_index_processed = SIZE_BITSET - 1;
 
         auto tend = std::chrono::steady_clock::now();
         if (out)
@@ -157,16 +149,6 @@ namespace PRIME
             std::cout << "find_prime_in_bitarray " << index_prime << " SIZE_BITSET: " << SIZE_BITSET << " last_index_processed: " << last_index_processed<< std::endl;
         }
 
-        if (array_reset == false)
-        {
-            array_reset = true;
-            bitarray.reset();
-            if (out)
-            {
-                const std::lock_guard<std::mutex> lock(mutex_prime_output);
-                std::cout << "Primes Eratosthenes array was reset ... " << " SIZE_BITSET: " << SIZE_BITSET << std::endl;
-            }
-        }
 
         long long idx = 0;
         std::vector<std::thread> vt;
@@ -180,7 +162,7 @@ namespace PRIME
                 std::cout << "Primes Eratosthenes search ... " << "i:" << i << " SIZE_BITSET: " << SIZE_BITSET << " last_index_processed: " << last_index_processed << std::endl;
             }
 
-            if(bitarray[i] == 0) // prime
+            if (bitarray.test(i) == false) // prime
             {
                 idx++;
                 if(idx == index_prime)
@@ -247,7 +229,7 @@ namespace PRIME
 
         if (n < last_index_processed.load())
         {
-            bool b = (bitarray[n] == 0) ? true : false;
+            bool b = (bitarray.test(n) == false) ? true : false;
             return b;
         }
 
@@ -258,6 +240,20 @@ namespace PRIME
             if (N % i == 0) return false;
         }
         map_prime[n]=true;
+        return true;
+    }
+
+    bool is_prime_brute_force(long long k)
+    {
+        if (k<2) return false;
+        else if (k==2) return true;
+
+        for (long long i=2; i*i <= k; i++)
+        {
+            // a divisor exist
+            if (k % i == 0)
+                return false;
+        }
         return true;
     }
 
@@ -273,7 +269,7 @@ namespace PRIME
         if (n < last_index_processed.load())
         {
             long long i = (long long)n;
-            bool b = (bitarray[i] == 0) ? true : false;
+            bool b = (bitarray.test(i) == false) ? true : false;
             return b;
         }
 
@@ -295,7 +291,7 @@ namespace PRIME
             if (can_check_bitset_for_none_prime)
             {
                 if (i <= SIZE_BITSET - 1)
-                    if (bitarray[i] == 1) // MUILTIPLE of prime
+                    if (bitarray.test(i) == true) // MUILTIPLE of prime
                         continue;
             }
             if (is_prime(i, istart))
@@ -892,31 +888,45 @@ namespace PRIME
 //            << std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart).count()
 //            << " ms" << std::endl;
 
+        std::cout << "last_index_processed "<< last_index_processed << std::endl;
+        std::cout << "SIZE_BITSET "<< SIZE_BITSET << std::endl;
         if (SIZE_BITSET >= 999983)
         {
-            if(bitarray[999983] == 0) std::cout << "ok 999983 is prime"<< std::endl;
+            if(bitarray.test(999983) == false) std::cout << "ok 999983 is prime"<< std::endl;
             else std::cout << "ERROR 999983 should be prime"<< std::endl;
         }
         if (SIZE_BITSET >= 999983+1)
         {
-            if(bitarray[999983+1] == 1) std::cout << "ok 999983+1 is not prime"<< std::endl;
+            if(bitarray.test(999983+1) == true) std::cout << "ok 999983+1 is not prime"<< std::endl;
             else std::cout << "ERROR 999983+1 should not be prime"<< std::endl;
         }
         if (SIZE_BITSET >= 198491329)
         {
-            if(bitarray[198491329] == 0) std::cout << "ok 198491329 is prime"<< std::endl;
+            if(bitarray.test(198491329) == false) std::cout << "ok 198491329 is prime"<< std::endl;
             else std::cout << "ERROR 198491329 should be prime"<< std::endl;
         }
         if (SIZE_BITSET >= 982451653)
         {
-            if(bitarray[982451653] == 0) std::cout << "ok 982451653 is prime"<< std::endl;
+            if(bitarray.test(982451653) == false) std::cout << "ok 982451653 is prime"<< std::endl;
             else std::cout << "ERROR 982451653 should be prime"<< std::endl;
         }
         if (SIZE_BITSET >= 982451653+1)
         {
-            if(bitarray[982451653+1] == 1) std::cout << "ok 982451653+1 is not prime"<< std::endl;
+            if(bitarray.test(982451653+1) == true) std::cout << "ok 982451653+1 is not prime"<< std::endl;
             else std::cout << "ERROR 982451653+1 should not be prime"<< std::endl;
         }
+
+        bool b; bool ba;
+        for (long long  i = 2; i <= 10000000; i++)
+        {
+            if (i < last_index_processed.load())
+            {
+                b = is_prime_brute_force(i);
+                if (bitarray.test(i) == false) ba = true; else ba = false;
+                if (b!=ba) std::cout << "ERROR with " << i << " " << b << " " << ba << std::endl;
+            }
+        }
+        std::cout << "ALL number to 10000000 checked " << std::endl;
     }
 }
 #endif // PRIME_H_INCLUDED
