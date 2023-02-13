@@ -6,6 +6,673 @@ using namespace RationalNS;
 using namespace PRIME;
 
 std::mutex mutex_output;
+std::mutex mutex_map;
+
+
+std::map<uinteger_t, std::string> mapTreeShape;
+std::map<long long, long long> mapTwoFactors;
+std::map<long long, std::vector<long long>> mapTwoFactors12;
+
+std::map<long long, long long> mapNumberPrimes;
+
+std::atomic<long long> two_nearest_factor_limit = 0;
+void two_nearest_factor(long long k, long long& factor1, long long& factor2);
+
+bool is_two_nearest_factor_done_to(long long k)
+{
+    if (two_nearest_factor_limit >= k)
+        return true;
+    return false;
+}
+
+std::vector<long long> get_two_nearest_factor2(long long f1)
+{
+    const std::lock_guard<std::mutex> lock(mutex_map);
+    return mapTwoFactors12[f1];
+}
+
+long long get_two_nearest_factor1(long long k)
+{
+    const std::lock_guard<std::mutex> lock(mutex_map);
+    return mapTwoFactors[k];
+}
+
+void get_two_nearest_factor_range(long long from, long long to)
+{
+    long long f1; long long f2;
+    for(size_t i = from; i<= to;i++)
+    {
+        two_nearest_factor(i, f1, f2);
+        {
+            const std::lock_guard<std::mutex> lock(mutex_map);
+            mapTwoFactors[i] = f1;
+            mapTwoFactors12[f1].push_back(f2);
+        }
+    }
+}
+
+void get_two_nearest_factor()
+{
+    for(size_t i = 0; i< 10;i++)
+    {
+        long long M = 100*1000;
+        long long start  = i*M;
+        long long ending = start + M - 1;
+        std::vector<std::thread> vt;
+        int NT = 20;
+        long long n = M/NT;
+        for (int ii=0;ii< NT;ii++)
+        {
+            vt.push_back( std::thread(get_two_nearest_factor_range, start+n*ii, start+n*ii + n-1 ));
+        }
+        for (size_t j=0;j<vt.size();j++)  vt[j].join();
+
+        two_nearest_factor_limit = ending;
+
+        {
+            const std::lock_guard<std::mutex> lock(mutex_output);
+            std::cout << "two_nearest_factor_limit " << two_nearest_factor_limit << std::endl;
+        }
+    }
+}
+
+void two_nearest_factor(long long k, long long& factor1, long long& factor2)
+{
+    long long dist;
+    long long mindist = -1;
+    long long minfactor = 1;
+
+    std::vector<long long> v = divisors(k);
+    for(size_t i = 0; i< v.size();i++)
+    {
+        factor1 = v[i];
+        factor2 = (k / v[i]);
+
+        if (factor1 * factor2 != k)
+        {
+            const std::lock_guard<std::mutex> lock(mutex_output);
+            std::cout << "ERROR (factor1 * factor2 != k) " << std::endl;
+        }
+
+        if (factor1 <= factor2)
+        {
+            dist = std::abs(factor2 - factor1);
+            if ((mindist == -1) || (dist <= mindist))
+            {
+                mindist = dist;
+                minfactor = factor1;
+            }
+        }
+    }
+
+    factor1 = minfactor;
+    factor2 = (k / factor1);
+}
+
+std::string tree_shape(long long k)
+{
+    {
+        const std::lock_guard<std::mutex> lock(mutex_map);
+        if (mapTreeShape.find(k) != mapTreeShape.end())
+            return mapTreeShape[k];
+    }
+
+    if (is_prime(k))
+    {
+        mapTreeShape[k] = "1";
+        return "1";
+    }
+
+    long long factor1; long long factor2;
+    two_nearest_factor(k, factor1, factor2);
+
+    std::string s1;
+    std::string s2;
+
+    s1 = tree_shape(factor1);
+    s2 = tree_shape(factor2);
+
+    std::string r = "[" + s1 + "," + s2 +"]";
+    {
+        const std::lock_guard<std::mutex> lock(mutex_map);
+        mapTreeShape[k] = r;
+    }
+    return r;
+}
+
+long long double_fact(long long k)
+{
+    long long r = 1;
+    for(size_t i = k; i >= 2; i=i-2)
+    {
+        r *= i;
+    }
+    return r;
+}
+
+long long number_primes_double_fact(long long k)
+{
+    long long sum = 0;
+    for(size_t i = k; i >= 2; i=i-2)
+    {
+        auto v = prime_factors(i);
+        sum += v.size();
+    }
+    return sum;
+}
+
+std::vector<long long> prime_factors_with_cnt(long long k, long long cnt)
+{
+    std::vector<long long> r;
+    long long t = k;
+
+    //https://www.calculator.net/prime-factorization-calculator.html?cvar=20000000000001&x=40&y=17
+    for (long long i = 2; i <= t; i++)
+    {
+        if (t == 1) break;
+        if (is_prime(i))
+        {
+            while(t % i == 0)
+            {
+                r.push_back(i);
+                t = t/i;;
+
+                if (cnt!=-1)
+                {
+                    if (r.size() > cnt) break;
+                }
+            }
+        }
+        if (is_prime(t))
+        {
+            r.push_back(t);
+            t = 1;
+        }
+
+        if (cnt!=-1)
+        {
+            if (r.size() > cnt) break;
+        }
+    }
+    std::sort(r.begin(), r.end());
+    return r;
+}
+
+long long number_primes(long long k, long long cnt = -1)
+{
+    if (cnt == -1)
+    {
+        const std::lock_guard<std::mutex> lock(mutex_map);
+        if (mapNumberPrimes.find(k) != mapNumberPrimes.end())
+            return mapNumberPrimes[k];
+    }
+
+    auto v = prime_factors_with_cnt(k, cnt);
+
+    if (cnt == -1)
+    {
+        const std::lock_guard<std::mutex> lock(mutex_map);
+        mapNumberPrimes[k] = v.size();
+    }
+
+    return v.size();
+}
+
+//2 (1*2)  (1*1)  => 2 (1*2)  (1*1)
+//3 (1*3)  (1*1)  => 2 (1*2)  (1*1)
+//4 (2*4)  (1*[1,1])  => 8 (2*4)  (1*[1,1])
+//5 (3*5)  (1*1)  => 4 (2*2)  (1*1)
+//6 (6*8)  ([1,1]*[1,[1,1]])  => 32 (4*8)  ([1,1]*[1,[1,1]])
+//7 (7*15)  (1*[1,1])  => 8 (2*4)  (1*[1,1])
+//8 (16*24)  ([[1,1],[1,1]]*[[1,1],[1,1]])  => 256 (16*16)  ([[1,1],[1,1]]*[[1,1],[1,1]])
+//9 (27*35)  ([1,[1,1]]*[1,1])  => 72 (8*9)  ([1,[1,1]]*[1,1])
+//10 (60*64)  ([[1,1],[1,1]]*[[1,[1,1]],[1,[1,1]]])  => 3456 (54*64)  ([[1,1],[1,1]]*[[1,[1,1]],[1,[1,1]]])
+//11 (99*105)  ([[1,1],1]*[1,[1,1]])  => 540 (20*27)  ([[1,1],1]*[1,[1,1]])
+//12 (192*240)  ([[1,[1,1]],[[1,1],[1,1]]]*[[1,1],[[1,1],[1,1]]])  => 20480 (128*160)  ([[1,[1,1]],[[1,1],[1,1]]]*[[1,1],[[1,1],[1,1]]])
+//13 (351*385)  ([1,[1,[1,1]]]*[1,[1,1]])  => 1800 (40*45)  ([1,[1,[1,1]]]*[1,[1,1]])
+//14 (768*840)  ([[[1,1],[1,1]],[[1,1],[1,[1,1]]]]*[[[1,1],1],[1,[1,1]]])  => 276480 (512*540)  ([[[1,1],[1,1]],[[1,1],[1,[1,1]]]]*[[[1,1],1],[1,[1,1]]])
+//15 (1365*1485)  ([[1,1],[1,1]]*[[1,1],[1,[1,1]]])  => 512 (16*32)  ([[1,1],[1,1]]*[[1,1],[1,[1,1]]])
+//16 (3072*3360)  ([[[1,1],[1,[1,1]]],[[1,[1,1]],[1,[1,1]]]]*[[1,[1,[1,1]]],[[1,1],[1,1]]])  => 10321920 (3072*3360)  ([[[1,1],[1,[1,1]]],[[1,[1,1]],[1,[1,1]]]]*[[1,[1,[1,1]]],[[1,1],[1,1]]])
+//17 180*200 min:36000
+//18 13440*13824 min:185794560
+//19(25245 25935) 540*567 min:306180
+//20 56448*57344 min:3236954112
+//22 285120*286720 min:81749606400
+//23 1440*1500 min:2160000
+//24 1382400*1419264 min:1961990553600
+//25 found 2nd shape at 2592*2700 min:6998400
+
+//27 ***found one shape at 17664 for first: 17640
+
+
+void search_829(long long N, long long sp2, std::string s2, long long first, long long target,
+                long long from, long long to, long long& res, std::atomic<long long>& shared_bestnum12)
+{
+    res = 0;
+    long long spjj;
+
+    // first * f2[from-to] <= target
+    if ( is_two_nearest_factor_done_to(first * to) )
+    {
+        {
+            const std::lock_guard<std::mutex> lock(mutex_output);
+            std::cout   << N << " search_829 is_two_nearest_factor_done_to " << " [" << from << "-" << to << "]"
+                        << std::endl;
+        }
+
+        long long f2;
+        std::vector<long long> v = get_two_nearest_factor2(first);
+        std::sort(v.begin(), v.end());
+        for(size_t i=0; i<v.size();i++)
+        {
+            {
+                const std::lock_guard<std::mutex> lock(mutex_output);
+                std::cout   << N << " search_829 is_two_nearest_factor_done_to  Factor f2 " <<  v[i]
+                            << std::endl;
+            }
+
+            f2 = v[i];
+            if (f2<first) continue;
+
+            spjj = number_primes(f2);
+            if (spjj != sp2) continue;
+            if (s2 != tree_shape(f2)) continue;
+
+            res = f2;
+            {
+                const std::lock_guard<std::mutex> lock(mutex_output);
+                std::cout << N << " HIT MAP found one shape at " << f2 << " for first: " << first  << std::endl;
+            }
+            break;
+        }
+        return;
+    }
+
+    {
+        const std::lock_guard<std::mutex> lock(mutex_output);
+        std::cout   << N << " search_829" << " [" << from << "-" << to << "]"
+                    << std::endl;
+    }
+
+    long long z;
+    long long t;
+    for(long long jj = from; jj <= to; jj++)
+    {
+       {
+            t = shared_bestnum12; // atomic
+            if (t != -1)
+            {
+                z = first * jj;
+                if (z > t) break;
+            }
+        }
+
+        if (jj%1000000 == 1)
+        {
+            const std::lock_guard<std::mutex> lock(mutex_output);
+            std::cout << N << " searching next " << jj << " for first: " << first << " [" << from << "-" << to << "]" << std::endl;
+        }
+
+        spjj = number_primes(jj);
+        if (spjj != sp2) continue;
+        if (s2 != tree_shape(jj)) continue;
+
+        // is s1 s2 minimal?
+        if ( is_two_nearest_factor_done_to(first*jj) )
+        {
+            long long f1 = get_two_nearest_factor1(first*jj);
+            if (f1 != first) continue;
+            long long f2 = first*jj / f1;
+            if (f2 != jj) continue;
+        }
+        else
+        {
+            long long f1; long long f2;
+            two_nearest_factor(first*jj, f1, f2);
+            if (f1 != first) continue;
+            if (f2 != jj) continue;
+        }
+
+        res = jj;
+
+        {
+            const std::lock_guard<std::mutex> lock(mutex_map);
+            t = shared_bestnum12;
+            if (t == -1)
+            {
+                shared_bestnum12 = res;
+            }
+            t = shared_bestnum12;
+            if (res < t)
+            {
+                shared_bestnum12 = res;
+            }
+        }
+
+        {
+            const std::lock_guard<std::mutex> lock(mutex_output);
+            std::cout << N << " ***found one shape at " << jj << " for first: " << first  << std::endl;
+        }
+        break;
+    }
+}
+
+
+long long Euler829_internal(long long N, long long& res)
+{
+    {
+        const std::lock_guard<std::mutex> lock(mutex_map);
+        mapTreeShape[0] = "1";
+        mapTreeShape[1] = "1";
+        mapTreeShape[2] = "1";// prime
+        mapTreeShape[3] = "1"; // prime
+    }
+
+    std::vector<long long> vfact;
+    std::vector<long long> vfactor1;
+    std::vector<long long> vfactor2;
+    std::vector<std::string> vshape;
+    std::vector<long long> vnumberprimes;
+    long long r;long long sp;
+
+    for(long long i = N; i<= N; i++)
+    {
+        r = double_fact(i);
+        vfact.push_back(r);
+
+        sp = number_primes_double_fact(i);
+        vnumberprimes.push_back(sp);
+
+        {
+            const std::lock_guard<std::mutex> lock(mutex_output);
+            std::cout << i << " " << r << "  primes cnt " << sp << std::endl;
+        }
+
+        long long factor1; long long factor2;
+        two_nearest_factor(r, factor1, factor2);
+        vfactor1.push_back(factor1);
+        vfactor2.push_back(factor2);
+    }
+
+    std::string s;
+    for(size_t i = 0; i< vfact.size(); i++)
+    {
+        s = tree_shape( vfact[i] );
+        vshape.push_back(s);
+        {
+            const std::lock_guard<std::mutex> lock(mutex_output);
+            std::cout << N + i << " " << s << std::endl;
+        }
+    }
+
+    long long sum = 0;
+    bool ok;
+    long long  M = 100*1000*1000;
+    std::string s1;
+    std::string s2;
+    long long  sp1;
+    long long  sp2;
+    long long  spj;
+    long long  spjj;
+
+    ok = false;
+    long bestnum2 = -1;
+    for(size_t i = 0; i< vfact.size(); i++)
+    {
+        if (is_prime(vfact[i]))
+        {
+            res = 2;
+            ok = true;
+            {
+                const std::lock_guard<std::mutex> lock(mutex_output);
+                std::cout << N+i << " found BEST shape at (prime) " << 2 << std::endl;
+            }
+            return res;
+            //continue;
+        }
+
+        s1 = tree_shape( vfactor1[i] );
+        s2 = tree_shape( vfactor2[i] );
+        sp1 = number_primes(vfactor1[i]);
+        sp2 = number_primes(vfactor2[i]);
+
+        {
+            long long f1; long long f2;
+            two_nearest_factor(vfactor1[i], f1, f2);
+
+            long long rf1; long long rf2;
+            two_nearest_factor(vfactor2[i], rf1, rf2);
+
+            const std::lock_guard<std::mutex> lock(mutex_output);
+            std::cout << N+i << " searching for shape " << s1 << "+" << s2
+                << " (" << vfactor1[i] << "[" << f1 << " "<< f2<< "]"
+                << " "  << vfactor2[i] << "[" << rf1 << " "<< rf2<< "]"
+                << ")"
+                << " primes: " << sp1 << " "<< sp2 << std::endl;
+        }
+
+        long long start0 = pow(2,sp1);
+        //if (N==30) start0 = 95334400; // next 194641920
+
+        //for(long long j = start0; j <= vfact[i]; j++)
+        for(long long j = start0; j <= vfactor1[i]; j++)
+        {
+            if (bestnum2 != -1)
+            {
+                if (j*j > bestnum2)
+                    break;
+            }
+
+            if (j*j > vfact[i])
+            {
+                const std::lock_guard<std::mutex> lock(mutex_output);
+                std::cout << N+i << " (j*j > vfact[i]) " << j*j << " " << vfact[i]<< " best " << bestnum2 << std::endl;
+                break;
+            }
+
+            //if (j%1000000 == 1)
+//            {
+//                const std::lock_guard<std::mutex> lock(mutex_output);
+//                std::cout << N+i << " searching first " << j << " to " << vfact[i]<< " best " << bestnum2 << std::endl;
+//            }
+
+            spj = number_primes(j);
+            if ( (spj == sp1) && (s1 == tree_shape(j)) )
+            {
+//                long long start = pow(2,sp2);
+//                if (start < j) start = j;
+                long long start =  j;
+
+                if (N >= 17)
+                {
+                    {
+                        const std::lock_guard<std::mutex> lock(mutex_output);
+                        std::cout << N+i << " searching NEXT, first= " << start << std::endl;
+                    }
+
+                    std::vector<std::thread> vt;
+                    int NT = 10;
+                    //long long m = vfact[i]/j;
+                    //long long m = vfactor2[i];
+                    long long m = 2 * j;
+                    long long n = (m - start + 1)/NT;
+                    if (n<=0) n = 1;
+
+                    std::atomic<long long> shared_bestnum12 = -1;
+                    std::vector<long long > vresult2(NT+1, 0);
+                    for (int ii=0;ii<1+NT;ii++)
+                    {
+                        vt.push_back( std::thread(  search_829, N, sp2, s2, j, vfact[i],
+                                                    start+n*ii, start+n*ii + n-1,
+                                                    std::ref(vresult2[ii]) ,
+                                                    std::ref(shared_bestnum12)
+                                                ));
+                    }
+                    for (size_t z=0;z<vt.size();z++)  vt[z].join();
+
+                    long long minsum = -1;
+                    for (int ii=0;ii<vt.size();ii++)
+                    {
+                        if (vresult2[ii]!=0)
+                        {
+                            if (minsum == -1) minsum = vresult2[ii];
+                            else if (vresult2[ii] < minsum) minsum = vresult2[ii];
+                        }
+                    }
+
+                    if (minsum > 0)
+                    {
+                        if (bestnum2 == -1) bestnum2 = j*minsum;
+                        else if (j*minsum < bestnum2) bestnum2 = j*minsum;
+
+                        ok = true;
+                        {
+                            const std::lock_guard<std::mutex> lock(mutex_output);
+                            std::cout << N+i << " found 2nd shape at " << j << "*" << minsum << " min:" << bestnum2 << std::endl;
+                        }
+                    }
+                    else
+                    {
+                    }
+                }
+                else
+                {
+                    long long start = pow(2,sp2);
+                    if (start < j) start = j;
+                    for(long long jj = start; jj <= vfact[i]/j; jj++)
+                    {
+                        if (j*jj > vfact[i]) break;
+                        if (jj < j) break;
+
+                        if (jj%100000 == 1)
+                        {
+                            const std::lock_guard<std::mutex> lock(mutex_output);
+                            std::cout << N+i << " searching next " << jj << " to " << vfact[i]/j << " for first: " << j << std::endl;
+                        }
+
+                        spjj = number_primes(jj);
+                        if (spjj != sp2) continue;
+                        if (s2 != tree_shape(jj)) continue;
+
+                        // is s1 s2 minimal?
+                        {
+                            long long f1; long long f2;
+                            two_nearest_factor(j*jj, f1, f2);
+                            if (f1 != j) continue;
+                            if (f2 != jj) continue;
+                        }
+
+                        {
+                            if (bestnum2 == -1) bestnum2 = j*jj;
+                            else if (j*jj < bestnum2) bestnum2 = j*jj;
+
+                            ok = true;
+                            if (j*jj <= bestnum2)
+                            {
+                                const std::lock_guard<std::mutex> lock(mutex_output);
+                                std::cout << N+i << " found a 2nd shape at " << j << "*" << jj << " min:" << bestnum2 << std::endl;
+                            }
+                            break; // jj is increasing
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (bestnum2 != -1)
+    {
+        sum = bestnum2;
+        ok = true;
+        {
+            const std::lock_guard<std::mutex> lock(mutex_output);
+            std::cout << N <<  "(" << vfactor1[0] << " " << vfactor2[0]<< ") found BEST shape at " << bestnum2 << std::endl;
+        }
+    }
+
+    if (ok == false)
+    {
+        {
+            const std::lock_guard<std::mutex> lock(mutex_output);
+            std::cout << "shape not found " << N << std::endl;
+        }
+    }
+
+    res = sum;
+    return res;
+}
+
+long long Euler829(long FROM = 2, long long N = 31)
+{
+    uinteger_t sum = 0;
+
+
+    long long factor1; long long factor2;
+    two_nearest_factor(64, factor1, factor2);
+    if (factor1!=8) std::cout << "ERROR 64 " << std::endl;
+    if (factor2!=8) std::cout << "ERROR 64 " << std::endl;
+
+    two_nearest_factor(8, factor1, factor2);
+    if (factor1!=2) std::cout << "ERROR 8 " << std::endl;
+    if (factor2!=4) std::cout << "ERROR 8 " << std::endl;
+
+    two_nearest_factor(4, factor1, factor2);
+    if (factor1!=2) std::cout << "ERROR 4 " << std::endl;
+    if (factor2!=2) std::cout << "ERROR 4 " << std::endl;
+
+    std::string s32 = tree_shape(32);
+    std::string s60 = tree_shape(60);
+    std::string s64 = tree_shape(64);
+    std::cout << s32 << " " << s60 << " " << s64 << std::endl;
+    if (s32 == s64) std::cout << "ERROR Tree 32 64 " << std::endl;
+    if (s32 == s64) std::cout << "ERROR Tree 32 64 " << std::endl;
+
+    int a=1;
+
+
+
+    int nt = std::thread::hardware_concurrency();
+    std::vector<std::thread> vt;
+    if (nt >= N - FROM + 1)
+    {
+        std::vector<std::thread> vt;
+        std::vector<long long > vresult(N+1, 0);
+        nt = (int)( N - FROM + 1);
+        for (int i=0;i< nt;i++)
+        {
+            vt.push_back( std::thread(Euler829_internal, FROM+i, std::ref(vresult[i]) ));
+        }
+        // Extra:
+        vt.push_back( std::thread(get_two_nearest_factor));
+
+        for (size_t j=0;j<vt.size();j++)  vt[j].join();
+
+        for (int i=0;i< nt - 1;i++)
+        {
+            long long r = double_fact(FROM+i);
+            long long factor1; long long factor2;
+            two_nearest_factor(r, factor1, factor2);
+
+            long long rr = vresult[i];
+            long long rfactor1; long long rfactor2;
+            two_nearest_factor(rr, rfactor1, rfactor2);
+
+            std::string s1 = tree_shape(factor1);
+            std::string s2 = tree_shape(factor2);
+            std::string rs1 = tree_shape(rfactor1);
+            std::string rs2 = tree_shape(rfactor2);
+
+            std::cout << FROM + i << " (" << factor1 << "*" << factor2 << ") " << " (" << s1 << "*" << s2 << ") "
+                      << " => " << vresult[i]
+                      << " (" << rfactor1 << "*" << rfactor2 << ") "
+                      << " (" << rs1 << "*" << rs2 << ")"
+            << std::endl;
+
+            sum += vresult[i] ;
+        }
+    }
+    return (long long)sum;
+}
 
 class p100
 {
@@ -6715,7 +7382,7 @@ int main()
 
     // prime sieve
     //prime_sieve_mt(32, false);
-    prime_sieve_mt2(30, true);
+    //prime_sieve_mt2(30, true);
 
 //    n = Euler827(18); to_file("Euler827", n);
 //    std::cout << "Euler827 " << n << std::endl;
@@ -6738,6 +7405,10 @@ int main()
 //    n = c100.solve(); to_file("Euler100", n);
 //    std::cout << "Euler100" << n << std::endl;
 
+
+    prime_sieve_mt2(30, true);
+    n = Euler829(2,31); to_file("Euler829", n);
+    std::cout << "Euler829 " << n << std::endl;
 
     std::cout << "Done enter a number to exit " << std::endl;
     int a; std::cin >> a;
