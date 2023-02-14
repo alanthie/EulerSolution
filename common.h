@@ -50,6 +50,8 @@ using dec101_t = math::wide_decimal::decwide_t<INT32_C(100), std::uint32_t, void
 #include <random>
 #include <list>
 #include <numeric>
+#include <stdexcept>
+
 
 #endif
 

@@ -1039,9 +1039,13 @@ namespace PRIME
 
     std::vector<long long>  middle_divisors(long long n)
     {
+        if (n<=0)  std::cerr << "ERROR in middle_divisors argument" << n << std::endl;
+        if (n<=0) throw std::logic_error("ERROR in middle_divisors argument");
         if (n<=0) return {1,1};
         long long a = middle_divisor(n) ;
-        return {a, n/a};
+        long long b = n/a;
+        if (a<=b) return {a, b};
+        return {b, a};
     }
 
     //https://onlinenumbertools.com/calculate-number-divisors
