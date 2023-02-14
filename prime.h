@@ -1018,6 +1018,32 @@ namespace PRIME
         return cnt;
     }
 
+    long long middle_divisor(long long n)
+    {
+        if (n <= 1) return 1;
+        if (is_prime(n)) return 1;
+
+        long double d = n;
+        long long sqn = (long long)std::sqrt(d);
+        if (sqn == 0) return 1;
+
+        for (long long i = sqn; i >= 1; i--)
+        {
+            if (n % i == 0)
+            {
+                return i;
+            }
+        }
+        return 1;
+    }
+
+    std::vector<long long>  middle_divisors(long long n)
+    {
+        if (n<=0) return {1,1};
+        long long a = middle_divisor(n) ;
+        return {a, n/a};
+    }
+
     //https://onlinenumbertools.com/calculate-number-divisors
     std::vector<long long>  divisors(long long n)
     {
