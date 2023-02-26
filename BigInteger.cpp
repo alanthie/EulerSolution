@@ -592,7 +592,9 @@ long long BigInteger::toLongLong()
 		sum = (sum*10) + (number[i] - '0');
 
     if (sign)
+    {
         sum = -1*sum;
+    }
 	return sum;
 }
 

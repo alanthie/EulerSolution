@@ -118,8 +118,13 @@ public:
         inline void prev(const atomic_bv_t* ref) { --pos; while (pos > 0 && !ref->test(pos)) { --pos; } }
         inline void begin(const atomic_bv_t* ref) { pos = 0; while (pos < ref->size() && !ref->test(pos)) { ++pos; } }
         inline void end(const atomic_bv_t* ref) { pos = ref->size(); }
-        inline size_t get(atomic_bv_t* ref) { return pos; }
-        inline const size_t get(const atomic_bv_t* ref) const { return ref->test(pos); }
+//        inline size_t get(atomic_bv_t* ref)
+//        {
+//            // ref??
+//            return pos;
+//        }
+        //inline const size_t get(const atomic_bv_t* ref) const { return ref->test(pos); }
+        inline size_t get(const atomic_bv_t* ref) const { return ref->test(pos); }
         inline bool cmp(const it_state& s) const { return pos != s.pos; }
     };
     SETUP_ITERATORS(atomic_bv_t, size_t, it_state);
@@ -180,5 +185,5 @@ inline bool atomic_bv_t::test(size_t idx, std::memory_order order) const {
 inline bool atomic_bv_t::operator[](size_t idx) const {
     return test(idx);
 }
-    
+
 }

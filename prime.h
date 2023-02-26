@@ -494,8 +494,10 @@ namespace PRIME
         return 2;
     }
 
-    uinteger_t next_uprime(uinteger_t p, uinteger_t n = 0)
+    uinteger_t next_uprime(long long p, uinteger_t n = 0)
     {
+        if (p<0) p=0;
+
         if (n == 0)
         {
             uinteger_t i = p+1;
@@ -566,6 +568,24 @@ namespace PRIME
         return r;
     }
 
+    dec101_t decpow(long long a, long long b )
+    {
+        if (a < 0)
+        {
+            std::cout << "ERROR upow a < 0 " <<std::endl;
+            return 1;
+        }
+        if ( b < 0)
+        {
+            std::cout << "ERROR upow b < 0 " <<std::endl;
+            return 1;
+        }
+        dec101_t r = 1;
+        for (long long i = 1; i <= b; i+=1)
+            r = r * a;
+        return r;
+    }
+
     uinteger_t power_modulo(uinteger_t a, uinteger_t power, uinteger_t mod)
     {
         // (a ⋅ b) mod m = [(a mod m) ⋅ (b mod m)] mod m
@@ -594,12 +614,26 @@ namespace PRIME
             r = r*i;
         return r;
     }
+    dec101_t decfact(long long a )
+    {
+        dec101_t r = 1;
+        for (long long i = 2; i <= a; i+=1)
+            r = r*i;
+        return r;
+    }
 
     uinteger_t ucombination(long long r, long long n )
     {
         uinteger_t a = ufact(r);
         uinteger_t b = ufact(n-r);
         uinteger_t c = ufact(n);
+        return c / (a*b);
+    }
+    dec101_t deccombination(long long r, long long n )
+    {
+        dec101_t a = decfact(r);
+        dec101_t b = decfact(n-r);
+        dec101_t c = decfact(n);
         return c / (a*b);
     }
 
